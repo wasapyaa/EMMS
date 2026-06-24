@@ -17,15 +17,11 @@ Route::get('/', function () {
 /* LOGIN */
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
-
-/* DASHBOARD TEST */
-Route::get('/student/dashboard', fn() => 'Student Dashboard');
-Route::get('/organizer/dashboard', fn() => 'Organizer Dashboard');
-Route::get('/admin/dashboard', fn() => 'Admin Dashboard');
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::prefix('student')->group(function () {
     Route::get('/dashboard', [StudentController::class, 'dashboard']);
+    Route::post('/join-semester', [StudentController::class, 'joinSemester']);
     Route::get('/events', [StudentController::class, 'events']);
     Route::get('/participation', [StudentController::class, 'participation']);
     Route::get('/ranking', [StudentController::class, 'ranking']);
@@ -45,11 +41,18 @@ Route::post('/organizer/logout', [AuthController::class, 'logout'])
     // Student Sign Up
 Route::get('/student/register', [AuthController::class, 'showStudentRegister']);
 Route::post('/student/register', [AuthController::class, 'studentRegister']);
+Route::post('/student/register/send-otp', [AuthController::class, 'sendRegisterOtp'])->name('student.register.send-otp');
 
 
 // Organizer signup
 Route::get('/organizer/register', [AuthController::class, 'showOrganizerRegister']);
 Route::post('/organizer/register', [AuthController::class, 'organizerRegister']);
+
+// Organizer forgot password (OTP via SMTP)
+Route::get('/organizer/forgot-password', [AuthController::class, 'showOrganizerForgotPassword'])->name('organizer.forgot-password.show');
+Route::post('/organizer/forgot-password', [AuthController::class, 'sendOrganizerOtp'])->name('organizer.forgot-password.send');
+Route::get('/organizer/reset-password', [AuthController::class, 'showOrganizerResetPassword'])->name('organizer.reset-password.show');
+Route::post('/organizer/reset-password', [AuthController::class, 'organizerResetPassword'])->name('organizer.reset-password.update');
 
 
 
@@ -61,6 +64,7 @@ Route::get('/organizer/proposals/create', [OrganizerController::class, 'createPr
 Route::get('/organizer/proposals/{id}', [OrganizerController::class, 'showProposal']);
 Route::post('/organizer/proposals', [OrganizerController::class, 'storeProposal']);
 Route::get('/organizer/events/approved', [OrganizerController::class, 'approvedEvents']);
+Route::get('/organizer/events/{id}', [OrganizerController::class, 'showEvent']);
 Route::get('/organizer/profile', [OrganizerController::class, 'profile']);
 Route::post('/organizer/profile/update', [OrganizerController::class, 'updateProfile']);
 Route::post('/organizer/profile/password', [OrganizerController::class, 'updatePassword']);
@@ -74,6 +78,8 @@ Route::delete('/organizer/proposals/{id}', [OrganizerController::class, 'deleteP
 Route::prefix('admin')->group(function () {
 
     Route::get('/dashboard', [AdminController::class, 'dashboard']);
+    Route::get('/hostel', [AdminController::class, 'hostel']);
+    Route::post('/hostel-eligibility', [AdminController::class, 'updateHostelEligibility']);
     Route::get('/profile', [AdminController::class, 'profile']);
     Route::post('/profile', [AdminController::class, 'updateProfile']);
     Route::get('/merit', [AdminController::class, 'viewMerit']);
@@ -82,6 +88,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/organizers', [AdminController::class, 'organizers']);
     Route::get('/events', [AdminController::class, 'events']);
     Route::get('/reset', [AdminController::class, 'reset']);
+    Route::post('/reset', [AdminController::class, 'processReset']);
 
 });
 
@@ -96,6 +103,8 @@ Route::get('/admin/organizers/{id}', [AdminController::class, 'viewOrganizer']);
 Route::get('/admin/events', [AdminController::class, 'manageEvents']);
 Route::post('/admin/events/{id}/approve', [AdminController::class, 'approveEvent']);
 Route::post('/admin/events/{id}/reject', [AdminController::class, 'rejectEvent']);
+Route::get('/admin/events/{id}/edit', [AdminController::class, 'editEvent']);
+Route::post('/admin/events/{id}/edit', [AdminController::class, 'updateEvent']);
 Route::get('/admin/events/{id}', [AdminController::class, 'viewEvent']);
 
 Route::get('/attendance/{token}', [AttendanceController::class, 'show']);

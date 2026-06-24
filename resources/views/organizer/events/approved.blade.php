@@ -24,118 +24,257 @@
     </h5>
 </div>
 
-{{-- APPROVED EVENTS TABLE --}}
-<div class="content-box">
-    <table class="table align-middle table-hover mb-0">
-        <thead class="text-muted">
-            <tr>
-                <th>Event Name</th>
-                <th>Date</th>
-                <th>Merit Points</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
+<style>
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+.animate-pulse {
+    animation: pulse 1.5s infinite;
+}
+</style>
 
-        @forelse($events as $e)
-            <tr>
-                <td>
-                    <i class="bi bi-circle-fill text-success me-2" style="font-size:8px"></i>
-                    {{ $e->title }}
-                </td>
+{{-- APPROVED EVENTS TABS --}}
+<ul class="nav nav-tabs mb-4" id="approvedEventsTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">
+            All <span class="badge bg-secondary ms-1">{{ $allEvents->count() }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab" aria-controls="upcoming" aria-selected="false">
+            Upcoming Event <span class="badge bg-primary ms-1">{{ $upcomingEvents->count() }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="ongoing-tab" data-bs-toggle="tab" data-bs-target="#ongoing" type="button" role="tab" aria-controls="ongoing" aria-selected="false">
+            Ongoing Event <span class="badge bg-success ms-1">{{ $ongoingEvents->count() }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button" role="tab" aria-controls="past" aria-selected="false">
+            Past Event <span class="badge bg-secondary ms-1">{{ $pastEvents->count() }}</span>
+        </button>
+    </li>
+</ul>
 
-                <td>
-                    {{ \Carbon\Carbon::parse($e->start_time)->format('Y-m-d') }}
-                </td>
+<div class="tab-content" id="approvedEventsTabsContent">
+    {{-- All Tab --}}
+    <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+        <div class="content-box">
+            <table class="table align-middle table-hover mb-0">
+                <thead class="text-muted">
+                    <tr>
+                        <th>Event Name</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Merit Points</th>
+                        <th>Attendance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($allEvents as $e)
+                    <tr>
+                        <td>
+                            <i class="bi bi-circle-fill me-2
+                                @if(\Carbon\Carbon::parse($e->start_time)->gt(now())) text-primary
+                                @elseif(\Carbon\Carbon::parse($e->end_time)->lt(now())) text-secondary
+                                @else text-success animate-pulse
+                                @endif"
+                                style="font-size:8px"></i>
+                            {{ $e->title }}
+                        </td>
+                        <td>{{ \Carbon\Carbon::parse($e->start_time)->format('Y-m-d H:i') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($e->end_time)->format('Y-m-d H:i') }}</td>
+                        <td><span class="badge bg-primary">{{ $e->merit_value }} Points</span></td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                <i class="bi bi-people-fill me-1"></i>{{ $e->attendances_count }} scanned
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/organizer/events/{{ $e->e_id }}"
+                               class="btn btn-sm btn-info text-white">
+                                <i class="bi bi-eye me-1"></i> View Details
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-info-circle me-1"></i> No approved events found.
+                        </td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-                <td>
-                    <span class="badge bg-primary">
-                        {{ $e->merit_value }} Points
-                    </span>
-                </td>
+    {{-- Upcoming Tab --}}
+    <div class="tab-pane fade" id="upcoming" role="tabpanel" aria-labelledby="upcoming-tab">
+        <div class="content-box">
+            <table class="table align-middle table-hover mb-0">
+                <thead class="text-muted">
+                    <tr>
+                        <th>Event Name</th>
+                        <th>Start Date</th>
+                        <th>Merit Points</th>
+                        <th>Attendance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($upcomingEvents as $e)
+                    <tr>
+                        <td>
+                            <i class="bi bi-circle-fill text-primary me-2" style="font-size:8px"></i>
+                            {{ $e->title }}
+                        </td>
+                        <td>
+                            {{ \Carbon\Carbon::parse($e->start_time)->format('Y-m-d H:i') }}
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">
+                                {{ $e->merit_value }} Points
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                <i class="bi bi-people-fill me-1"></i>{{ $e->attendances_count }} scanned
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/organizer/events/{{ $e->e_id }}"
+                               class="btn btn-sm btn-info text-white">
+                                <i class="bi bi-eye me-1"></i> View Details
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-info-circle me-1"></i>
+                            No upcoming events found.
+                        </td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-                <td>
-                    <button 
-                        class="btn btn-sm btn-info viewEventBtn"
-                        data-bs-toggle="modal"
-                        data-bs-target="#eventDetailModal"
-                        data-title="{{ $e->title }}"
-                        data-description="{{ $e->description }}"
-                        data-location="{{ $e->location_name }}"
-                        data-start="{{ $e->start_time }}"
-                        data-status="{{ ucfirst($e->status) }}"
-                        data-pdf="{{ $e->proposal_path ? asset('storage/'.$e->proposal_path) : '' }}"
-                        data-merit="{{ $e->merit_value }}"
-                    >
-                        <i class="bi bi-eye me-1"></i> View Details
-                    </button>
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="4" class="text-center text-muted py-4">
-                    <i class="bi bi-info-circle me-1"></i>
-                    No approved events found.
-                </td>
-            </tr>
-        @endforelse
+    {{-- Semasa (Ongoing) Tab --}}
+    <div class="tab-pane fade" id="ongoing" role="tabpanel" aria-labelledby="ongoing-tab">
+        <div class="content-box">
+            <table class="table align-middle table-hover mb-0">
+                <thead class="text-muted">
+                    <tr>
+                        <th>Event Name</th>
+                        <th>Start / End Date</th>
+                        <th>Merit Points</th>
+                        <th>Attendance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($ongoingEvents as $e)
+                    <tr>
+                        <td>
+                            <i class="bi bi-circle-fill text-success me-2 animate-pulse" style="font-size:8px"></i>
+                            {{ $e->title }}
+                        </td>
+                        <td>
+                            {{ \Carbon\Carbon::parse($e->start_time)->format('Y-m-d H:i') }} - {{ \Carbon\Carbon::parse($e->end_time)->format('H:i') }}
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">
+                                {{ $e->merit_value }} Points
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                <i class="bi bi-people-fill me-1"></i>{{ $e->attendances_count }} scanned
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/organizer/events/{{ $e->e_id }}"
+                               class="btn btn-sm btn-info text-white">
+                                <i class="bi bi-eye me-1"></i> View Details
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-info-circle me-1"></i>
+                            No ongoing events found.
+                        </td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-        </tbody>
-    </table>
-</div>
-
-{{-- MODAL --}}
-<div class="modal fade" id="eventDetailModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-calendar-event me-1"></i> Event Details
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                <p><strong>Title:</strong> <span id="modalTitle"></span></p>
-                <p><strong>Description:</strong> <span id="modalDescription"></span></p>
-                <p><strong>Location:</strong> <span id="modalLocation"></span></p>
-                <p><strong>Start Time:</strong> <span id="modalStartTime"></span></p>
-                <p><strong>Status:</strong> <span id="modalStatus"></span></p>
-                <p><strong>Merit Points:</strong> <span id="modalMerit"></span></p>
-                <p><strong>Proposal PDF:</strong> <span id="modalPdf"></span></p>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">
-                    Close
-                </button>
-            </div>
-
+    {{-- Selepas (Past) Tab --}}
+    <div class="tab-pane fade" id="past" role="tabpanel" aria-labelledby="past-tab">
+        <div class="content-box">
+            <table class="table align-middle table-hover mb-0">
+                <thead class="text-muted">
+                    <tr>
+                        <th>Event Name</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Merit Points</th>
+                        <th>Attendance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($pastEvents as $e)
+                    <tr>
+                        <td>
+                            <i class="bi bi-circle-fill text-secondary me-2" style="font-size:8px"></i>
+                            {{ $e->title }}
+                        </td>
+                        <td>
+                            {{ \Carbon\Carbon::parse($e->start_time)->format('Y-m-d H:i') }}
+                        </td>
+                        <td>
+                            {{ \Carbon\Carbon::parse($e->end_time)->format('Y-m-d H:i') }}
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">
+                                {{ $e->merit_value }} Points
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                <i class="bi bi-people-fill me-1"></i>{{ $e->attendances_count }} scanned
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/organizer/events/{{ $e->e_id }}"
+                               class="btn btn-sm btn-info text-white">
+                                <i class="bi bi-eye me-1"></i> View Details
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-info-circle me-1"></i>
+                            No past events found.
+                        </td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
-
-{{-- SCRIPT --}}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.viewEventBtn').forEach(button => {
-        button.addEventListener('click', function () {
-            document.getElementById('modalTitle').innerText = this.dataset.title;
-            document.getElementById('modalDescription').innerText = this.dataset.description;
-            document.getElementById('modalLocation').innerText = this.dataset.location;
-            document.getElementById('modalStartTime').innerText = this.dataset.start;
-            document.getElementById('modalStatus').innerText = this.dataset.status;
-            document.getElementById('modalMerit').innerText = this.dataset.merit + ' Points';
-            
-            if (this.dataset.pdf) {
-                document.getElementById('modalPdf').innerHTML = '<a href="' + this.dataset.pdf + '" target="_blank" class="btn btn-sm btn-success">View PDF</a>';
-            } else {
-                document.getElementById('modalPdf').innerHTML = '<span class="text-muted">No file uploaded</span>';
-            }
-        });
-    });
-});
-</script>
 
 @endsection

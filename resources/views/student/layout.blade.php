@@ -109,10 +109,26 @@
 
     <!-- TOP BAR -->
     <div class="topbar d-flex justify-content-between align-items-center mb-4">
-        <h5 class="mb-0">Student Dashboard</h5>
-        <div>
-            <i class="bi bi-person-circle me-2"></i>
-            {{ $student->name ?? 'Student' }}
+        <h5 class="mb-0">Student Portal</h5>
+        <div class="d-flex align-items-center">
+            @if(auth('student')->check())
+                @if(auth('student')->user()->current_semester_active)
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill me-3 px-2 py-1 small fw-bold">
+                        <i class="bi bi-check-circle-fill me-1"></i> Active
+                    </span>
+                @else
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill me-2 px-2 py-1 small fw-bold">
+                        <i class="bi bi-exclamation-circle-fill me-1"></i> Inactive
+                    </span>
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill me-3 px-2 py-0" data-bs-toggle="modal" data-bs-target="#joinSemesterModal" style="font-size: 0.75rem; line-height: 1.5;">
+                        Join Semester
+                    </button>
+                @endif
+            @endif
+            <div>
+                <i class="bi bi-person-circle me-2"></i>
+                {{ auth('student')->user()->name ?? 'Student' }}
+            </div>
         </div>
     </div>
 
@@ -120,5 +136,34 @@
 
 </div>
 
+<!-- JOIN SEMESTER MODAL -->
+<div class="modal fade" id="joinSemesterModal" tabindex="-1" aria-labelledby="joinSemesterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="joinSemesterModalLabel">Join Current Semester</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url('/student/join-semester') }}">
+                @csrf
+                <div class="modal-body py-4">
+                    <p class="text-muted small mb-4">
+                        Please enter the active Semester Join Code to activate your account for the current semester and unlock full access.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Semester Join Code</label>
+                        <input type="text" name="semester_code" class="form-control form-control-lg text-center fw-bold" placeholder="e.g. SEM-XXXXXX" required style="letter-spacing: 1px;">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-3 px-4">Activate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

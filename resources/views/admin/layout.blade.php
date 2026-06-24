@@ -96,6 +96,9 @@
         <a href="/admin/reset">
             <i class="bi bi-arrow-clockwise me-2"></i> Manage Reset
         </a>
+        <a href="/admin/hostel">
+            <i class="bi bi-building me-2"></i> Hostel Eligibility
+        </a>
         <a href="/admin/profile">
             <i class="bi bi-person me-2"></i> Admin Detail
         </a>

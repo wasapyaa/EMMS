@@ -44,4 +44,28 @@
     </div>
 </div>
 
+<div class="content-box mb-4">
+    <h6 class="fw-bold mb-3">Hostel & Semester Settings</h6>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="stat-card bg-event h-100">
+                <h6>Current Hostel Quota</h6>
+                <h2 class="fw-bold">{{ $eligibleStudents }}</h2>
+                <p class="mb-0 mt-2 small">
+                    Anda boleh mengemaskini nilai ini di halaman <a href="/admin/hostel">Hostel Eligibility</a>.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stat-card bg-merit h-100" style="background: linear-gradient(135deg, #4f46e5, #3b82f6);">
+                <h6>Active Semester Join Code</h6>
+                <h2 class="fw-bold text-white">{{ $currentSemesterCode }}</h2>
+                <p class="mb-0 mt-2 small text-white-50">
+                    Kongsi kod ini kepada pelajar aktif supaya mereka dapat menyertai semester semasa.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection

@@ -14,7 +14,9 @@ class Organizer extends Model
         'email',
         'phone',
         'pass_hash',
-        'status'
+        'status',
+        'otp_code',
+        'otp_expires_at'
     ];
 
     public function events()

@@ -10,60 +10,113 @@ use App\Models\Student;
 use App\Models\Attendance;
 use App\Models\Event;
 use App\Models\MeritLog;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
-    public function dashboard()
-{
-    // ambil student login
-    $studentId = session('user_id');
-    $student = Student::findOrFail($studentId);
+    public function dashboard(Request $request)
+    {
+        // ambil student login
+        $studentId = session('user_id');
+        $student = Student::findOrFail($studentId);
+        $selectedSemester = $request->input('semester', 'current');
+        $eligibleStudents = Setting::where('key', 'hostel_eligible_students')->value('value');
+        $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
 
-    // 1️⃣ TOTAL MERIT (SUM dari merit_logs)
-    $totalMerit = DB::table('merit_logs')
-        ->where('s_id', $studentId)
-        ->sum('points_added');
+        $semesters = DB::table('semester_merits')
+            ->select('semester_name')
+            ->distinct()
+            ->orderByDesc('semester_name')
+            ->pluck('semester_name');
 
-    // 2️⃣ EVENTS ATTENDED
-    $eventsAttended = Attendance::where('s_id', $studentId)->count();
+        $totalStudents = Student::count();
 
-    // 3️⃣ RANKING (simple & konsisten)
-    $ranking = DB::table('students')
-        ->leftJoin('merit_logs', 'merit_logs.s_id', '=', 'students.s_id')
-        ->select(
-            'students.s_id',
-            DB::raw('COALESCE(SUM(merit_logs.points_added),0) as total_merit')
-        )
-        ->groupBy('students.s_id')
-        ->orderByDesc('total_merit')
-        ->pluck('students.s_id')
-        ->search($studentId);
+        if ($selectedSemester !== 'current') {
+            // 1️⃣ TOTAL MERIT (Past Semester)
+            $totalMerit = DB::table('semester_merits')
+                ->where('s_id', $studentId)
+                ->where('semester_name', $selectedSemester)
+                ->value('total_merit') ?? 0;
 
-    // ranking bermula dari 1
-    $ranking = $ranking !== false ? $ranking + 1 : '-';
+            // 2️⃣ EVENTS ATTENDED (Past Semester)
+            $eventsAttended = DB::table('semester_attendances')
+                ->where('s_id', $studentId)
+                ->where('semester_name', $selectedSemester)
+                ->count();
 
-    $participations = DB::table('attendances')
-    ->join('events', 'attendances.e_id', '=', 'events.e_id')
-    ->where('attendances.s_id', $studentId)
-    ->orderByDesc('events.start_time')
-    ->limit(5)
-    ->select(
-        'events.title as event_name',
-        'events.start_time as event_date',
-        'events.merit_value'
-    )
-    ->get();
+            // 3️⃣ RANKING (Past Semester)
+            $rankingList = DB::table('semester_merits')
+                ->where('semester_name', $selectedSemester)
+                ->orderByDesc('total_merit')
+                ->pluck('s_id');
+            
+            $ranking = $rankingList->search($studentId);
+            $ranking = $ranking !== false ? $ranking + 1 : '-';
 
-    return view('student.dashboard', compact(
-    'student',
-    'totalMerit',
-    'eventsAttended',
-    'ranking',
-    'participations'
-));
-}
+            $participations = DB::table('semester_attendances')
+                ->where('s_id', $studentId)
+                ->where('semester_name', $selectedSemester)
+                ->orderByDesc('event_date')
+                ->limit(5)
+                ->get();
+        } else {
+            // 1️⃣ TOTAL MERIT (SUM dari merit_logs for current semester)
+            $totalMerit = DB::table('merit_logs')
+                ->where('s_id', $studentId)
+                ->where('semester_name', 'current')
+                ->sum('points_added');
+
+            // 2️⃣ EVENTS ATTENDED (current semester)
+            $eventsAttended = Attendance::where('s_id', $studentId)
+                ->where('semester_name', 'current')
+                ->count();
+
+            // 3️⃣ RANKING (simple & konsisten - current semester)
+            $rankingList = DB::table('students')
+                ->where('students.current_semester_active', true)
+                ->leftJoin('merit_logs', function($join) {
+                    $join->on('merit_logs.s_id', '=', 'students.s_id')
+                         ->where('merit_logs.semester_name', '=', 'current');
+                })
+                ->select(
+                    'students.s_id',
+                    DB::raw('COALESCE(SUM(merit_logs.points_added),0) as total_merit')
+                )
+                ->groupBy('students.s_id')
+                ->orderByDesc('total_merit')
+                ->pluck('students.s_id');
+
+            $ranking = $rankingList->search($studentId);
+            $ranking = $ranking !== false ? $ranking + 1 : '-';
+
+            $participations = DB::table('attendances')
+                ->join('events', 'attendances.e_id', '=', 'events.e_id')
+                ->where('attendances.s_id', $studentId)
+                ->where('attendances.semester_name', 'current')
+                ->orderByDesc('events.start_time')
+                ->limit(5)
+                ->select(
+                    'events.title as event_name',
+                    'events.start_time as event_date',
+                    'events.merit_value'
+                )
+                ->get();
+        }
+
+        return view('student.dashboard', compact(
+            'student',
+            'totalMerit',
+            'eventsAttended',
+            'ranking',
+            'participations',
+            'semesters',
+            'selectedSemester',
+            'eligibleStudents',
+            'totalStudents'
+        ));
+    }
 
   
 
@@ -84,106 +137,129 @@ class StudentController extends Controller
     return view('student.events', compact('events'));
 }
 
-public function participation()
-{
-    $studentId = session('user_id');
+    public function participation(Request $request)
+    {
+        $studentId = session('user_id');
+        $selectedSemester = $request->input('semester', 'current');
 
-    $participations = \DB::table('attendances')
-        ->join('events', 'attendances.e_id', '=', 'events.e_id')
-        ->where('attendances.s_id', $studentId)
-        ->select(
-            'events.title as event_name',
-            'events.location_name',
-            'events.start_time as event_date',
-            'events.merit_value'
-        )
-        ->get();
+        $semesters = DB::table('semester_merits')
+            ->select('semester_name')
+            ->distinct()
+            ->orderByDesc('semester_name')
+            ->pluck('semester_name');
 
-    return view('student.participation', compact('participations'));
-}
-
-public function ranking()
-{
-    $studentId = session('user_id');
-
-    /* =====================================================
-       1️⃣ SIMPAN RANKING SNAPSHOT (SEKALI SEHARI)
-       ===================================================== */
-    $today = now()->toDateString();
-
-    $snapshotExists = DB::table('ranking_snapshots')
-        ->where('snapshot_date', $today)
-        ->exists();
-
-    if (!$snapshotExists) {
-
-        // kira ranking semua student hari ini
-        $studentsToday = DB::table('students')
-            ->leftJoin('merit_logs', 'merit_logs.s_id', '=', 'students.s_id')
-            ->select(
-                'students.s_id',
-                DB::raw('COALESCE(SUM(merit_logs.points_added),0) as total_merit')
-            )
-            ->groupBy('students.s_id')
-            ->orderByDesc('total_merit')
-            ->get();
-
-        $rank = 1;
-        foreach ($studentsToday as $s) {
-            DB::table('ranking_snapshots')->insert([
-                's_id' => $s->s_id,
-                'rank' => $rank,
-                'snapshot_date' => $today,
-                'created_at' => now()
-            ]);
-            $rank++;
+        if ($selectedSemester !== 'current') {
+            $participations = DB::table('semester_attendances')
+                ->where('s_id', $studentId)
+                ->where('semester_name', $selectedSemester)
+                ->select(
+                    'event_name',
+                    DB::raw('NULL as location_name'),
+                    'event_date',
+                    'merit_value'
+                )
+                ->orderByDesc('event_date')
+                ->get();
+        } else {
+            $participations = DB::table('attendances')
+                ->join('events', 'attendances.e_id', '=', 'events.e_id')
+                ->where('attendances.s_id', $studentId)
+                ->where('attendances.semester_name', 'current')
+                ->select(
+                    'events.title as event_name',
+                    'events.location_name',
+                    'events.start_time as event_date',
+                    'events.merit_value'
+                )
+                ->orderByDesc('events.start_time')
+                ->get();
         }
+
+        return view('student.participation', compact('participations', 'semesters', 'selectedSemester'));
     }
 
-    /* =====================================================
-       2️⃣ LEADERBOARD SEMASA
-       ===================================================== */
-    $students = DB::table('students')
-        ->leftJoin('merit_logs', 'merit_logs.s_id', '=', 'students.s_id')
-        ->select(
-            'students.s_id',
-            'students.name',
-            DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
-        )
-        ->groupBy('students.s_id', 'students.name')
-        ->orderByDesc('total_merit')
-        ->get();
+    public function ranking(Request $request)
+    {
+        $studentId = session('user_id');
+        $selectedSemester = $request->input('semester', 'current');
 
-    // ranking semasa student login
-    $ranking = $students->pluck('s_id')->search($studentId);
-    $ranking = $ranking !== false ? $ranking + 1 : '-';
+        $semesters = DB::table('semester_merits')
+            ->select('semester_name')
+            ->distinct()
+            ->orderByDesc('semester_name')
+            ->pluck('semester_name');
 
+        if ($selectedSemester !== 'current') {
+            $students = DB::table('semester_merits')
+                ->join('students', 'students.s_id', '=', 'semester_merits.s_id')
+                ->where('semester_merits.semester_name', $selectedSemester)
+                ->select(
+                    'students.s_id',
+                    'students.name',
+                    'semester_merits.total_merit'
+                )
+                ->orderByDesc('semester_merits.total_merit')
+                ->get();
+            
+            $ranking = $students->pluck('s_id')->search($studentId);
+            $ranking = $ranking !== false ? $ranking + 1 : '-';
+            
+            $rankingHistory = []; // Graf trend tidak tersedia untuk semester lepas
+        } else {
+            /* =====================================================
+               1️⃣ SIMPAN RANKING SNAPSHOT (SEKALI SEHARI)
+               ===================================================== */
+            Student::saveDailyRankingSnapshot();
 
-    /* =====================================================
-       3️⃣ DATA GRAF (RANKING TREND STUDENT LOGIN)
-       ===================================================== */
-    $rankingHistory = DB::table('ranking_snapshots')
-        ->where('s_id', $studentId)
-        ->orderBy('snapshot_date')
-        ->get()
-        ->map(function ($row) {
-            return [
-                'date' => $row->snapshot_date,
-                'rank' => $row->rank
-            ];
-        })
-        ->toArray();
+            /* =====================================================
+               2️⃣ LEADERBOARD SEMASA
+               ===================================================== */
+            $students = DB::table('students')
+                ->where('students.current_semester_active', true)
+                ->leftJoin('merit_logs', function($join) {
+                    $join->on('merit_logs.s_id', '=', 'students.s_id')
+                         ->where('merit_logs.semester_name', '=', 'current');
+                })
+                ->select(
+                    'students.s_id',
+                    'students.name',
+                    DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
+                )
+                ->groupBy('students.s_id', 'students.name')
+                ->orderByDesc('total_merit')
+                ->get();
 
+            // ranking semasa student login
+            $ranking = $students->pluck('s_id')->search($studentId);
+            $ranking = $ranking !== false ? $ranking + 1 : '-';
 
-    /* =====================================================
-       4️⃣ RETURN VIEW
-       ===================================================== */
-    return view('student.ranking', compact(
-        'students',
-        'ranking',
-        'rankingHistory'
-    ));
-}
+            /* =====================================================
+               3️⃣ DATA GRAF (RANKING TREND STUDENT LOGIN)
+               ===================================================== */
+            $rankingHistory = DB::table('ranking_snapshots')
+                ->where('s_id', $studentId)
+                ->orderBy('snapshot_date')
+                ->get()
+                ->map(function ($row) {
+                    return [
+                        'date' => $row->snapshot_date,
+                        'rank' => $row->rank
+                    ];
+                })
+                ->toArray();
+        }
+
+        /* =====================================================
+           4️⃣ RETURN VIEW
+           ===================================================== */
+        return view('student.ranking', compact(
+            'students',
+            'ranking',
+            'rankingHistory',
+            'semesters',
+            'selectedSemester'
+        ));
+    }
 
 
 
@@ -223,29 +299,23 @@ public function updatePassword(Request $request)
     return back()->with('success', 'Password updated successfully');
 }
 
-
-public function saveDailyRankingSnapshot()
+public function joinSemester(Request $request)
 {
-    $students = DB::table('students')
-        ->leftJoin('merit_logs', 'merit_logs.s_id', '=', 'students.s_id')
-        ->select(
-            'students.s_id',
-            DB::raw('COALESCE(SUM(merit_logs.points_added),0) as total')
-        )
-        ->groupBy('students.s_id')
-        ->orderByDesc('total')
-        ->get();
+    $request->validate([
+        'semester_code' => 'required|string'
+    ]);
 
-    $rank = 1;
+    $activeCode = Setting::where('key', 'current_semester_code')->value('value');
 
-    foreach ($students as $s) {
-        DB::table('ranking_snapshots')->insert([
-            's_id' => $s->s_id,
-            'rank' => $rank,
-            'snapshot_date' => now()->toDateString()
-        ]);
-        $rank++;
+    if (!$activeCode || strtoupper($request->semester_code) !== strtoupper($activeCode)) {
+        return back()->with('error', 'Invalid Semester Join Code. Please contact Admin HEP for the correct code.');
     }
+
+    $student = Student::findOrFail(session('user_id'));
+    $student->current_semester_active = true;
+    $student->save();
+
+    return redirect('/student/dashboard')->with('success', 'Successfully joined the new semester!');
 }
 
 }

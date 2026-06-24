@@ -25,8 +25,44 @@
     </div>
 
     <div class="mb-3">
-        <label>Description</label>
-        <textarea name="description" class="form-control"></textarea>
+        <label>Brief Description (Simple summary for list)</label>
+        <textarea name="description" class="form-control" rows="2"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label>Event Banner (Image)</label>
+        <input type="file" name="event_banner" accept="image/*" class="form-control">
+        <small class="text-muted">Upload a banner image for the event (optional).</small>
+    </div>
+
+    <div class="mb-3">
+        <label>Event Details (Long description/tentative/etc.)</label>
+        <textarea name="event_details" class="form-control" rows="5" placeholder="Tuliskan tentative program, syarat-syarat, atau maklumat terperinci di sini..."></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label>Category</label>
+        <select name="category" class="form-control" required>
+            <option value="">Select Category</option>
+            <option value="Sport">Sport</option>
+            <option value="Education">Education</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Social">Social</option>
+            <option value="Technical">Technical</option>
+            <option value="Other">Other</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label>Telegram Group Link</label>
+        <input type="url" name="telegram_link" class="form-control" placeholder="https://t.me/yourgroup">
+        <small class="text-muted">Letakkan link group Telegram jika ada (optional).</small>
+    </div>
+
+    <div class="mb-3">
+        <label>WhatsApp Group Link</label>
+        <input type="url" name="whatsapp_link" class="form-control" placeholder="https://chat.whatsapp.com/yourlink">
+        <small class="text-muted">Letakkan link group WhatsApp jika ada (optional).</small>
     </div>
 
     <!-- removed merit_value input -->

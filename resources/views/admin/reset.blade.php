@@ -22,30 +22,30 @@
 
 <div class="d-flex justify-content-center">
     <div class="content-box" style="max-width:520px; width:100%;">
-        {{-- Academic Session (Dummy) --}}
-        <div class="mb-3">
-            <label class="form-label fw-bold">
-                <i class="bi bi-calendar me-1"></i> Select Academic Session
-            </label>
-            <select class="form-select">
-                <option selected>2024/2025 Semester 1</option>
-                <option>2024/2025 Semester 2</option>
-                <option>2025/2026 Semester 1</option>
-            </select>
-        </div>
+        <form action="{{ url('/admin/reset') }}" method="POST">
+            @csrf
+            {{-- Academic Session --}}
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-calendar me-1"></i> Enter New Academic Session
+                </label>
+                <input type="text" class="form-control" name="semester_name" placeholder="e.g. 2024/2025 Semester 1" required>
+                <div class="form-text">The current merit points will be saved under this semester name before resetting.</div>
+            </div>
 
-        {{-- Button (UI ONLY) --}}
-        <button class="btn btn-danger w-100" disabled>
-            <i class="bi bi-exclamation-triangle me-1"></i> RESET ALL MERIT POINTS
-        </button>
+            {{-- Button --}}
+            <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to reset all merit points? This action cannot be undone.')">
+                <i class="bi bi-exclamation-triangle me-1"></i> RESET ALL MERIT POINTS
+            </button>
 
-        {{-- Warning --}}
-        <div class="alert alert-danger mt-3">
-            <i class="bi bi-exclamation-triangle me-1"></i>
-            <strong>Attention:</strong>
-            This action will permanently reset all organizer and student merit
-            points for the new semester.
-        </div>
+            {{-- Warning --}}
+            <div class="alert alert-danger mt-3 mb-0">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                <strong>Attention:</strong>
+                This action will permanently reset all student merit
+                points to 0 for the new semester and save their current merit to the database.
+            </div>
+        </form>
     </div>
 </div>
 

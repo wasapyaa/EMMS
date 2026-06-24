@@ -17,15 +17,24 @@
                 Please enter your credentials to access your portal
             </p>
 
+            @if (session('success'))
+                <div class="alert alert-success text-center py-2 mb-3 small">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger text-center py-2 mb-3 small">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <form method="POST" action="/login">
                 @csrf
 
                 {{-- ROLE SWITCH --}}
                 <div class="btn-group w-100 mb-3" role="group">
-                    <input type="radio" class="btn-check" name="role" id="student" value="student" checked>
-                    <label class="btn btn-outline-primary" for="student">Student</label>
-
-                    <input type="radio" class="btn-check" name="role" id="organizer" value="organizer">
+                    <input type="radio" class="btn-check" name="role" id="organizer" value="organizer" checked>
                     <label class="btn btn-outline-primary" for="organizer">Organizer</label>
 
                     <input type="radio" class="btn-check" name="role" id="admin" value="admin">
@@ -56,7 +65,7 @@
                             Remember Me
                         </label>
                     </div>
-                    <a href="#" class="small text-decoration-none">Forgot Password?</a>
+                    <a href="#" id="forgotPasswordLink" class="small text-decoration-none">Forgot Password?</a>
                 </div>
 
                 {{-- LOGIN BUTTON --}}
@@ -86,19 +95,27 @@
 
 </div>
 
-{{-- SIGNUP REDIRECT --}}
+{{-- SIGNUP & FORGOT PASSWORD REDIRECT --}}
 <script>
 document.getElementById('signupLink').addEventListener('click', function (e) {
     e.preventDefault();
 
-    if (document.getElementById('student').checked) {
-        window.location.href = '/student/register';
-    } 
-    else if (document.getElementById('organizer').checked) {
+    if (document.getElementById('organizer').checked) {
         window.location.href = '/organizer/register';
     } 
     else {
         alert('Admin account is managed by the system administrator.');
+    }
+});
+
+document.getElementById('forgotPasswordLink').addEventListener('click', function (e) {
+    e.preventDefault();
+
+    if (document.getElementById('organizer').checked) {
+        window.location.href = '/organizer/forgot-password';
+    } 
+    else {
+        alert('Admin password reset is managed by the system administrator.');
     }
 });
 </script>

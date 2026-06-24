@@ -19,7 +19,7 @@
         <i class="bi bi-star me-2"></i> Student Merit List
     </h5>
     
-    <a href="/admin/merit/export" class="btn btn-success">
+    <a href="/admin/merit/export?semester={{ request('semester', 'current') }}" class="btn btn-success">
         <i class="bi bi-file-earmark-excel me-2"></i> Export to Excel
     </a>
 </div>
@@ -27,6 +27,12 @@
 <!-- Search Form -->
 <div class="content-box mb-4">
     <form method="GET" class="d-flex gap-2">
+        <select name="semester" class="form-select" style="max-width: 250px;">
+            <option value="current" {{ $selectedSemester == 'current' ? 'selected' : '' }}>Current Semester</option>
+            @foreach($semesters as $sem)
+                <option value="{{ $sem }}" {{ $selectedSemester == $sem ? 'selected' : '' }}>{{ $sem }}</option>
+            @endforeach
+        </select>
         <input type="text"
                name="search"
                value="{{ $search }}"

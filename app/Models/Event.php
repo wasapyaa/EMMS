@@ -22,7 +22,12 @@ class Event extends Model
         'qr_path',
         'merit_value',
         'status',
-        'proposal_path'
+        'proposal_path',
+        'telegram_link',
+        'whatsapp_link',
+        'category',
+        'event_banner',
+        'event_details'
     ];
 
     public function organizer()

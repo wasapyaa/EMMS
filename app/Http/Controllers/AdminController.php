@@ -12,8 +12,10 @@ use App\Models\Organizer;
 use App\Models\Event;
 use App\Models\Admin;
 use App\Models\MeritLog;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 
 
 
@@ -24,52 +26,135 @@ class AdminController extends Controller
     $totalStudents  = Student::count();
     $totalOrganizers = Organizer::count();
     $totalEvents    = Event::count();
+    $eligibleStudents = Setting::where('key', 'hostel_eligible_students')->value('value');
+    $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
+
+    $currentSemesterCode = Setting::where('key', 'current_semester_code')->value('value') ?? 'No Active Code';
 
     return view('admin.dashboard', compact(
         'totalStudents',
         'totalOrganizers',
-        'totalEvents'
+        'totalEvents',
+        'eligibleStudents',
+        'currentSemesterCode'
     ));
 }
 
+    public function updateHostelEligibility(Request $request)
+    {
+        $request->validate([
+            'eligible_students' => 'required|integer|min:1',
+        ]);
 
-  public function viewMerit(Request $request)
-{
-    $search = $request->search;
+        Setting::updateOrCreate(
+            ['key' => 'hostel_eligible_students'],
+            ['value' => $request->eligible_students]
+        );
 
-    $students = DB::table('students')
-        ->leftJoin('merit_logs', 'merit_logs.s_id', '=', 'students.s_id')
-        ->select(
-            'students.s_id',
-            'students.name',
-            'students.num_matrics',
-            DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
-        )
-        ->when($search, function ($q) use ($search) {
-            $q->where('students.name', 'like', "%$search%")
-              ->orWhere('students.num_matrics', 'like', "%$search%");
-        })
-        ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
-        ->orderByDesc('total_merit')
-        ->get();
+        return redirect('/admin/hostel')->with('success', 'Jumlah pelajar layak ke kolej semester hadapan telah dikemaskini.');
+    }
 
-    return view('admin.merit.index', compact('students', 'search'));
-}
+    public function hostel(Request $request)
+    {
+        $eligibleStudents = Setting::where('key', 'hostel_eligible_students')->value('value');
+        $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
 
-public function exportMerit()
-{
-    $students = DB::table('students')
-        ->leftJoin('merit_logs', 'merit_logs.s_id', '=', 'students.s_id')
-        ->select(
-            'students.name',
-            'students.num_matrics',
-            DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
-        )
-        ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
-        ->orderByDesc('total_merit')
-        ->get();
+        return view('admin.hostel', compact('eligibleStudents'));
+    }
 
-    $csvFileName = 'student-merit-list-' . date('Y-m-d') . '.csv';
+    public function viewMerit(Request $request)
+    {
+        $search = $request->search;
+        $selectedSemester = $request->input('semester', 'current');
+
+        $semesters = DB::table('semester_merits')
+            ->select('semester_name')
+            ->distinct()
+            ->orderByDesc('semester_name')
+            ->pluck('semester_name');
+
+        if ($selectedSemester !== 'current') {
+            $students = DB::table('students')
+                ->leftJoin('semester_merits', function($join) use ($selectedSemester) {
+                    $join->on('semester_merits.s_id', '=', 'students.s_id')
+                         ->where('semester_merits.semester_name', '=', $selectedSemester);
+                })
+                ->select(
+                    'students.s_id',
+                    'students.name',
+                    'students.num_matrics',
+                    DB::raw('COALESCE(SUM(semester_merits.total_merit), 0) as total_merit')
+                )
+                ->when($search, function ($q) use ($search) {
+                    $q->where(function($query) use ($search) {
+                        $query->where('students.name', 'like', "%$search%")
+                              ->orWhere('students.num_matrics', 'like', "%$search%");
+                    });
+                })
+                ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
+                ->orderByDesc('total_merit')
+                ->get();
+        } else {
+            $students = DB::table('students')
+                ->leftJoin('merit_logs', function($join) {
+                    $join->on('merit_logs.s_id', '=', 'students.s_id')
+                         ->where('merit_logs.semester_name', '=', 'current');
+                })
+                ->select(
+                    'students.s_id',
+                    'students.name',
+                    'students.num_matrics',
+                    DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
+                )
+                ->when($search, function ($q) use ($search) {
+                    $q->where(function($query) use ($search) {
+                        $query->where('students.name', 'like', "%$search%")
+                              ->orWhere('students.num_matrics', 'like', "%$search%");
+                    });
+                })
+                ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
+                ->orderByDesc('total_merit')
+                ->get();
+        }
+
+        return view('admin.merit.index', compact('students', 'search', 'semesters', 'selectedSemester'));
+    }
+
+    public function exportMerit(Request $request)
+    {
+        $selectedSemester = $request->input('semester', 'current');
+
+        if ($selectedSemester !== 'current') {
+            $students = DB::table('students')
+                ->leftJoin('semester_merits', function($join) use ($selectedSemester) {
+                    $join->on('semester_merits.s_id', '=', 'students.s_id')
+                         ->where('semester_merits.semester_name', '=', $selectedSemester);
+                })
+                ->select(
+                    'students.name',
+                    'students.num_matrics',
+                    DB::raw('COALESCE(SUM(semester_merits.total_merit), 0) as total_merit')
+                )
+                ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
+                ->orderByDesc('total_merit')
+                ->get();
+            $csvFileName = 'student-merit-list-'. Str::slug($selectedSemester) .'-' . date('Y-m-d') . '.csv';
+        } else {
+            $students = DB::table('students')
+                ->leftJoin('merit_logs', function($join) {
+                    $join->on('merit_logs.s_id', '=', 'students.s_id')
+                         ->where('merit_logs.semester_name', '=', 'current');
+                })
+                ->select(
+                    'students.name',
+                    'students.num_matrics',
+                    DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
+                )
+                ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
+                ->orderByDesc('total_merit')
+                ->get();
+            $csvFileName = 'student-merit-list-current-' . date('Y-m-d') . '.csv';
+        }
 
     $headers = [
         "Content-type"        => "text/csv",
@@ -104,6 +189,7 @@ public function viewStudentMerit($id)
     $logs = DB::table('merit_logs')
     ->join('events', 'events.e_id', '=', 'merit_logs.e_id')
     ->where('merit_logs.s_id', $id)
+    ->where('merit_logs.semester_name', 'current')
     ->select(
         'events.title as event_title',
         'merit_logs.points_added',
@@ -272,7 +358,80 @@ public function viewEvent($id)
     }
 
     $event = Event::findOrFail($id);
-    return view('admin.events.show', compact('event'));
+
+    $attendances = \App\Models\Attendance::with('student')
+        ->where('e_id', $id)
+        ->orderBy('scan_time', 'asc')
+        ->get();
+
+    return view('admin.events.show', compact('event', 'attendances'));
+}
+
+
+public function editEvent($id)
+{
+    if (!session('admin_id')) {
+        abort(403, 'Unauthorized');
+    }
+
+    $event = Event::findOrFail($id);
+    return view('admin.events.edit', compact('event'));
+}
+
+
+public function updateEvent(Request $request, $id)
+{
+    if (!session('admin_id')) {
+        abort(403, 'Unauthorized');
+    }
+
+    $request->validate([
+        'title'         => 'required|string|max:255',
+        'description'   => 'nullable|string',
+        'location_name' => 'required|string|max:255',
+        'location_lat'  => 'required|numeric',
+        'location_long' => 'required|numeric',
+        'radius_meter'  => 'required|integer|min:1',
+        'start_time'    => 'required|date',
+        'end_time'      => 'required|date|after_or_equal:start_time',
+        'merit_value'   => 'nullable|integer|min:0|max:100',
+        'category'      => 'nullable|string|max:50',
+        'telegram_link' => 'nullable|url',
+        'whatsapp_link' => 'nullable|url',
+        'event_details' => 'nullable|string',
+        'event_banner'  => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+    ]);
+
+    $event = Event::findOrFail($id);
+
+    $event->title         = $request->title;
+    $event->description   = $request->description;
+    $event->location_name = $request->location_name;
+    $event->location_lat  = $request->location_lat;
+    $event->location_long = $request->location_long;
+    $event->radius_meter  = $request->radius_meter;
+    $event->start_time    = \Carbon\Carbon::parse($request->start_time);
+    $event->end_time      = \Carbon\Carbon::parse($request->end_time);
+    $event->category      = $request->category;
+    $event->event_details = $request->event_details;
+    $event->telegram_link = $request->telegram_link;
+    $event->whatsapp_link = $request->whatsapp_link;
+
+    if ($request->filled('merit_value')) {
+        $event->merit_value = $request->merit_value;
+    }
+
+    if ($request->hasFile('event_banner')) {
+        if ($event->event_banner) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($event->event_banner);
+        }
+        $path = $request->file('event_banner')->store('banners', 'public');
+        $event->event_banner = $path;
+    }
+
+    $event->save();
+
+    return redirect('/admin/events/' . $id)->with('success', 'Event updated successfully by Admin HEP.');
 }
 
 
@@ -285,6 +444,105 @@ public function viewEvent($id)
     public function reset()
     {
         return view('admin.reset');
+    }
+
+    public function processReset(Request $request)
+    {
+        $request->validate([
+            'semester_name' => 'required|string|max:255',
+        ]);
+
+        $semesterName = $request->semester_name;
+
+        // 1. Get current merits for all students (current semester only)
+        $students = DB::table('students')
+            ->leftJoin('merit_logs', function($join) {
+                $join->on('merit_logs.s_id', '=', 'students.s_id')
+                     ->where('merit_logs.semester_name', '=', 'current');
+            })
+            ->select(
+                'students.s_id',
+                DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
+            )
+            ->groupBy('students.s_id')
+            ->get();
+
+        // 2. Save to semester_merits table
+        $insertData = [];
+        $now = now();
+        foreach ($students as $student) {
+            $insertData[] = [
+                's_id' => $student->s_id,
+                'semester_name' => $semesterName,
+                'total_merit' => $student->total_merit,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        // Insert in chunks to be safe with DB limits
+        foreach (array_chunk($insertData, 500) as $chunk) {
+            DB::table('semester_merits')->insert($chunk);
+        }
+
+        // 3. Clear existing merits (Update 'current' to the reset semester name instead of truncating)
+        DB::table('merit_logs')
+            ->where('semester_name', 'current')
+            ->update(['semester_name' => $semesterName]);
+
+        // Generate a new random semester code
+        $semesterCode = 'SEM-' . strtoupper(Str::random(6));
+        Setting::updateOrCreate(
+            ['key' => 'current_semester_code'],
+            ['value' => $semesterCode]
+        );
+
+        // Deactivate all students for the new semester and reset merit
+        DB::table('students')->update([
+            'total_merit' => 0,
+            'current_semester_active' => false
+        ]);
+        
+        // 4. Archive attendances to semester_attendances (current semester only)
+        $attendances = DB::table('attendances')
+            ->join('events', 'attendances.e_id', '=', 'events.e_id')
+            ->where('attendances.semester_name', 'current')
+            ->select(
+                'attendances.s_id',
+                'events.title as event_name',
+                'events.start_time as event_date',
+                'events.merit_value'
+            )
+            ->get();
+            
+        $attInsertData = [];
+        foreach ($attendances as $att) {
+            $attInsertData[] = [
+                's_id' => $att->s_id,
+                'semester_name' => $semesterName,
+                'event_name' => $att->event_name,
+                'event_date' => $att->event_date,
+                'merit_value' => $att->merit_value,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        foreach (array_chunk($attInsertData, 500) as $chunk) {
+            DB::table('semester_attendances')->insert($chunk);
+        }
+
+        // 5. Clear current attendances (Update 'current' to the reset semester name instead of truncating)
+        DB::table('attendances')
+            ->where('semester_name', 'current')
+            ->update(['semester_name' => $semesterName]);
+        
+        // Also clear ranking snapshots if applicable
+        if (Schema::hasTable('ranking_snapshots')) {
+            DB::table('ranking_snapshots')->truncate();
+        }
+
+        return redirect('/admin/dashboard')->with('success', 'All student merits have been successfully reset and saved. New semester join code is: ' . $semesterCode);
     }
 
 
@@ -332,15 +590,21 @@ public function showSendReminder()
     public function sendReminderToAll()
 {
     $students = Student::orderByDesc('total_merit')->get();
+    
+    $eligibleStudents = Setting::where('key', 'hostel_eligible_students')->value('value');
+    $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
+
+    // Calculate dynamic brackets based on the eligible limit
+    $bracket1Max = max(1, intval(round($eligibleStudents * 0.23))); // equivalent to top ~30 of 130
+    $bracket2Max = max($bracket1Max + 1, intval(round($eligibleStudents * 0.77))); // equivalent to top ~100 of 130
+    $bracket3Max = $eligibleStudents; // up to the limit
 
     foreach ($students as $index => $student) {
 
         $rank = $index + 1;
-
-        // DEFAULT MESSAGE
         $messageBody = "";
 
-        if ($rank >= 1 && $rank <= 30) {
+        if ($rank >= 1 && $rank <= $bracket1Max) {
 
             $messageBody = "Congratulations {$student->name}!
 
@@ -348,7 +612,7 @@ You are currently ranked #{$rank} based on your merit points.
 
 Excellent performance! Keep up the great work and maintain your position to secure hostel accommodation for the upcoming semester.";
 
-        } elseif ($rank >= 31 && $rank <= 100) {
+        } elseif ($rank > $bracket1Max && $rank <= $bracket2Max) {
 
             $messageBody = "Dear {$student->name},
 
@@ -356,13 +620,13 @@ Your current merit ranking is #{$rank}.
 
 You are in a competitive position. Continue participating in events to improve your merit points and strengthen your chances of obtaining hostel accommodation.";
 
-        } elseif ($rank >= 101 && $rank <= 130) {
+        } elseif ($rank > $bracket2Max && $rank <= $bracket3Max) {
 
             $messageBody = "Dear {$student->name},
 
 Your current merit ranking is #{$rank}.
 
-Please be cautious. Only the top 130 students are eligible for hostel accommodation.
+Please be cautious. Only the top {$eligibleStudents} students are eligible for hostel accommodation.
 You are advised to actively participate in more events to maintain or improve your ranking.";
 
         } else {
@@ -371,7 +635,7 @@ You are advised to actively participate in more events to maintain or improve yo
 
 Your current merit ranking is #{$rank}.
 
-Unfortunately, your ranking is currently outside the hostel eligibility range.
+Unfortunately, your ranking is currently outside the hostel eligibility range (top {$eligibleStudents} students).
 You are encouraged to participate in more events to earn additional merit points and improve your chances of securing hostel accommodation next semester.";
         }
 
