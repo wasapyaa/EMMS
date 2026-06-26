@@ -171,11 +171,14 @@ class AttendanceController extends Controller
                     'title',
                     'location_name',
                     'start_time',
+                    'end_time',
                     'merit_value',
                     'description',
                     'telegram_link',
                     'whatsapp_link',
                     'category',
+                    'event_banner',
+                    'event_details',
                 ]);
         } else {
             $query = DB::table('semester_attendances')
