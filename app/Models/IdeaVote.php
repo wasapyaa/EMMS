@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class IdeaVote extends Model
 {
     use HasFactory;
-    protected $fillable = ['idea_id', 's_id'];
+    protected $fillable = ['idea_id', 's_id', 'type'];
 }
