@@ -83,6 +83,7 @@ class IdeaController extends Controller
                 'dislikes'     => $dislikes,
                 'net_score'    => $netScore,
                 'user_vote'    => $userVote,  // null, 'like', or 'dislike'
+                'student_id'   => (int)$idea->s_id,
                 'has_reported' => $s_id ? DB::table('idea_reports')->where('idea_id', $idea->id)->where('s_id', $s_id)->exists() : false,
                 'created_at'   => $idea->created_at->diffForHumans(),
                 'is_new'       => $idea->created_at->diffInDays(now()) <= 7,
@@ -186,6 +187,32 @@ class IdeaController extends Controller
         return response()->json([
             'status'  => 'success',
             'message' => 'Idea reported successfully'
+        ]);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $request->validate([
+            's_id' => 'required|integer'
+        ]);
+
+        $idea = Idea::findOrFail($id);
+
+        if ((int)$idea->s_id !== (int)$request->s_id) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Unauthorized to delete this idea.'
+            ], 403);
+        }
+
+        // Clean up votes and reports first
+        IdeaVote::where('idea_id', $id)->delete();
+        DB::table('idea_reports')->where('idea_id', $id)->delete();
+        $idea->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Idea deleted successfully'
         ]);
     }
 }

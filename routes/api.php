@@ -28,3 +28,4 @@ Route::get('/ideas', [IdeaController::class, 'index']);
 Route::post('/ideas', [IdeaController::class, 'store']);
 Route::post('/ideas/{id}/vote', [IdeaController::class, 'vote']);
 Route::post('/ideas/{id}/report', [IdeaController::class, 'report']);
+Route::delete('/ideas/{id}', [IdeaController::class, 'destroy']);
