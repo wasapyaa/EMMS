@@ -89,6 +89,9 @@
         <a href="/organizer/events/approved">
             <i class="bi bi-check-circle me-2"></i> Approved Events
         </a>
+        <a href="/organizer/ideas">
+            <i class="bi bi-lightbulb me-2"></i> Event Ideas
+        </a>
         <a href="/organizer/profile">
             <i class="bi bi-person me-2"></i> Profile
         </a>

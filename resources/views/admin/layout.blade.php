@@ -89,6 +89,9 @@
         <a href="/admin/events">
             <i class="bi bi-calendar-event me-2"></i> Manage Event
         </a>
+        <a href="/admin/ideas">
+            <i class="bi bi-lightbulb me-2"></i> Event Ideas
+        </a>
         
         <a href="/admin/send-reminder">
     <i class="bi bi-envelope-paper me-2"></i> Send Merit Reminder

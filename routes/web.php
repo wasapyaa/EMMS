@@ -65,6 +65,7 @@ Route::get('/organizer/proposals/{id}', [OrganizerController::class, 'showPropos
 Route::post('/organizer/proposals', [OrganizerController::class, 'storeProposal']);
 Route::get('/organizer/events/approved', [OrganizerController::class, 'approvedEvents']);
 Route::get('/organizer/events/{id}', [OrganizerController::class, 'showEvent']);
+Route::get('/organizer/ideas', [OrganizerController::class, 'ideas']);
 Route::get('/organizer/profile', [OrganizerController::class, 'profile']);
 Route::post('/organizer/profile/update', [OrganizerController::class, 'updateProfile']);
 Route::post('/organizer/profile/password', [OrganizerController::class, 'updatePassword']);
@@ -87,6 +88,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/merit/{id}', [AdminController::class, 'viewStudentMerit']);
     Route::get('/organizers', [AdminController::class, 'organizers']);
     Route::get('/events', [AdminController::class, 'events']);
+    Route::get('/ideas', [AdminController::class, 'ideas']);
     Route::get('/reset', [AdminController::class, 'reset']);
     Route::post('/reset', [AdminController::class, 'processReset']);
 
