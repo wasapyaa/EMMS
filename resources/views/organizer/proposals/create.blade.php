@@ -74,21 +74,93 @@
 
     <div class="row">
         <div class="col-md-4 mb-3">
-            <label>Latitude</label>
-            <input type="number" step="any" name="location_lat" class="form-control" required placeholder="e.g. 3.12345">
+            <label class="form-label fw-semibold">Latitude</label>
+            <input type="number" step="any" id="location_lat" name="location_lat" class="form-control" required placeholder="e.g. 3.12345">
         </div>
         <div class="col-md-4 mb-3">
-            <label>Longitude</label>
-            <input type="number" step="any" name="location_long" class="form-control" required placeholder="e.g. 101.12345">
+            <label class="form-label fw-semibold">Longitude</label>
+            <input type="number" step="any" id="location_long" name="location_long" class="form-control" required placeholder="e.g. 101.12345">
         </div>
         <div class="col-md-4 mb-3">
-            <label>Radiusg(Meters)</label>
-            <input type="number" name="radius_meter" class="form-control" required placeholder="e.g. 100">
+            <label class="form-label fw-semibold">Radius (Meters)</label>
+            <input type="number" id="radius_meter" name="radius_meter" class="form-control" required placeholder="e.g. 100" value="100">
         </div>
-        <a href="https://www.google.com/maps" target="_blank">
-            Open Google Maps
-        </a>
     </div>
+
+    <!-- Leaflet Map Integration -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
+            <span>Select Location on Map</span>
+            <small class="text-primary"><i class="bi bi-info-circle me-1"></i>Click on the map to pin location</small>
+        </label>
+        <div id="map" style="height: 350px; border-radius: 8px; border: 1px solid #ced4da; z-index: 1;"></div>
+        <small class="text-muted mt-1 d-block">
+            You can click anywhere on the map to automatically retrieve the latitude and longitude. The red circle displays the attendance radius.
+        </small>
+    </div>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Default center: UiTM Shah Alam
+            var defaultLat = 3.0697;
+            var defaultLng = 101.5037;
+            var defaultZoom = 15;
+
+            var map = L.map('map').setView([defaultLat, defaultLng], defaultZoom);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            var marker;
+            var circle;
+
+            function updateMap(lat, lng, radius) {
+                if (marker) map.removeLayer(marker);
+                if (circle) map.removeLayer(circle);
+
+                marker = L.marker([lat, lng]).addTo(map);
+                circle = L.circle([lat, lng], {
+                    color: '#dc3545',
+                    fillColor: '#dc3545',
+                    fillOpacity: 0.15,
+                    radius: radius
+                }).addTo(map);
+
+                map.setView([lat, lng]);
+            }
+
+            // Click Map event
+            map.on('click', function(e) {
+                var lat = e.latlng.lat.toFixed(6);
+                var lng = e.latlng.lng.toFixed(6);
+                var radius = parseInt(document.getElementById('radius_meter').value) || 100;
+
+                document.getElementById('location_lat').value = lat;
+                document.getElementById('location_long').value = lng;
+
+                updateMap(lat, lng, radius);
+            });
+
+            // Input fields change event
+            function handleInputChange() {
+                var lat = parseFloat(document.getElementById('location_lat').value);
+                var lng = parseFloat(document.getElementById('location_long').value);
+                var radius = parseInt(document.getElementById('radius_meter').value) || 100;
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    updateMap(lat, lng, radius);
+                }
+            }
+
+            document.getElementById('location_lat').addEventListener('input', handleInputChange);
+            document.getElementById('location_long').addEventListener('input', handleInputChange);
+            document.getElementById('radius_meter').addEventListener('input', handleInputChange);
+        });
+    </script>
 <br>
     <div class="mb-3">
         <label>Start Date & Time</label>

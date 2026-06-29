@@ -106,9 +106,9 @@
                     @endif
                 </label>
                 @if($proposal->status == 'approved')
-                    <input type="text" class="form-control bg-light text-muted" value="{{ $proposal->location_lat }}" disabled>
+                    <input type="text" id="location_lat" class="form-control bg-light text-muted" value="{{ $proposal->location_lat }}" disabled>
                 @else
-                    <input type="number" step="any" name="location_lat" class="form-control" value="{{ old('location_lat', $proposal->location_lat) }}" required>
+                    <input type="number" step="any" id="location_lat" name="location_lat" class="form-control" value="{{ old('location_lat', $proposal->location_lat) }}" required>
                 @endif
             </div>
             <div class="col-md-4 mb-3">
@@ -119,9 +119,9 @@
                     @endif
                 </label>
                 @if($proposal->status == 'approved')
-                    <input type="text" class="form-control bg-light text-muted" value="{{ $proposal->location_long }}" disabled>
+                    <input type="text" id="location_long" class="form-control bg-light text-muted" value="{{ $proposal->location_long }}" disabled>
                 @else
-                    <input type="number" step="any" name="location_long" class="form-control" value="{{ old('location_long', $proposal->location_long) }}" required>
+                    <input type="number" step="any" id="location_long" name="location_long" class="form-control" value="{{ old('location_long', $proposal->location_long) }}" required>
                 @endif
             </div>
             <div class="col-md-4 mb-3">
@@ -132,13 +132,101 @@
                     @endif
                 </label>
                 @if($proposal->status == 'approved')
-                    <input type="text" class="form-control bg-light text-muted" value="{{ $proposal->radius_meter }}" disabled>
+                    <input type="text" id="radius_meter" class="form-control bg-light text-muted" value="{{ $proposal->radius_meter }}" disabled>
                     <small class="text-muted">Location settings cannot be changed after approval.</small>
                 @else
-                    <input type="number" name="radius_meter" class="form-control" value="{{ old('radius_meter', $proposal->radius_meter) }}" required>
+                    <input type="number" id="radius_meter" name="radius_meter" class="form-control" value="{{ old('radius_meter', $proposal->radius_meter) }}" required>
                 @endif
             </div>
         </div>
+
+        <!-- Leaflet Map Integration -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
+                <span>Location on Map</span>
+                @if($proposal->status != 'approved')
+                    <small class="text-primary"><i class="bi bi-info-circle me-1"></i>Click on the map to pin location</small>
+                @else
+                    <small class="text-muted"><i class="bi bi-lock-fill me-1"></i>Map is read-only after approval</small>
+                @endif
+            </label>
+            <div id="map" style="height: 350px; border-radius: 8px; border: 1px solid #ced4da; z-index: 1;"></div>
+            <small class="text-muted mt-1 d-block">
+                @if($proposal->status != 'approved')
+                    You can click anywhere on the map to automatically retrieve the latitude and longitude. The red circle displays the attendance radius.
+                @else
+                    This is the approved attendance location.
+                @endif
+            </small>
+        </div>
+
+        <!-- Leaflet CSS & JS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var initialLat = parseFloat("{{ $proposal->location_lat }}") || 3.0697;
+                var initialLng = parseFloat("{{ $proposal->location_long }}") || 101.5037;
+                var initialRadius = parseInt("{{ $proposal->radius_meter }}") || 100;
+                var isApproved = "{{ $proposal->status == 'approved' }}" === "1";
+
+                var map = L.map('map').setView([initialLat, initialLng], 15);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                var marker;
+                var circle;
+
+                function updateMap(lat, lng, radius) {
+                    if (marker) map.removeLayer(marker);
+                    if (circle) map.removeLayer(circle);
+
+                    marker = L.marker([lat, lng]).addTo(map);
+                    circle = L.circle([lat, lng], {
+                        color: '#dc3545',
+                        fillColor: '#dc3545',
+                        fillOpacity: 0.15,
+                        radius: radius
+                    }).addTo(map);
+
+                    map.setView([lat, lng]);
+                }
+
+                // Initialize marker
+                updateMap(initialLat, initialLng, initialRadius);
+
+                if (!isApproved) {
+                    // Click Map event
+                    map.on('click', function(e) {
+                        var lat = e.latlng.lat.toFixed(6);
+                        var lng = e.latlng.lng.toFixed(6);
+                        var radius = parseInt(document.getElementById('radius_meter').value) || 100;
+
+                        document.getElementById('location_lat').value = lat;
+                        document.getElementById('location_long').value = lng;
+
+                        updateMap(lat, lng, radius);
+                    });
+
+                    // Input fields change event
+                    function handleInputChange() {
+                        var lat = parseFloat(document.getElementById('location_lat').value);
+                        var lng = parseFloat(document.getElementById('location_long').value);
+                        var radius = parseInt(document.getElementById('radius_meter').value) || 100;
+
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            updateMap(lat, lng, radius);
+                        }
+                    }
+
+                    document.getElementById('location_lat').addEventListener('input', handleInputChange);
+                    document.getElementById('location_long').addEventListener('input', handleInputChange);
+                    document.getElementById('radius_meter').addEventListener('input', handleInputChange);
+                }
+            });
+        </script>
 
         {{-- Date & Time — LOCKED if approved --}}
         <div class="mb-3">
