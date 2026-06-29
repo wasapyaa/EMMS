@@ -458,7 +458,7 @@ class AttendanceController extends Controller
         $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
         $hostelEligible = $rank !== null && $rank <= $eligibleStudents;
 
-        $topStudents = $students->take(5)->values()->map(function ($s, $index) {
+        $topStudents = $students->values()->map(function ($s, $index) {
             return [
                 'rank' => $index + 1,
                 's_id' => $s->s_id,
