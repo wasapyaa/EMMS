@@ -367,6 +367,29 @@ public function viewEvent($id)
     return view('admin.events.show', compact('event', 'attendances'));
 }
 
+    public function downloadQr($id)
+    {
+        $adminId = session('admin_id');
+        if (!$adminId) return redirect('/login');
+
+        $event = \App\Models\Event::where('e_id', $id)
+            ->where('status', 'approved')
+            ->firstOrFail();
+
+        if (!$event->qr_code_token) {
+            abort(404, 'QR code not available for this event.');
+        }
+
+        $qrImage = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+            ->size(300)
+            ->generate($event->qr_code_token);
+
+        return response($qrImage, 200)
+            ->header('Content-Type', 'image/svg+xml')
+            ->header('Content-Disposition', 'attachment; filename="event_' . $event->e_id . '_qr.svg"');
+    }
+
+
 
 public function editEvent($id)
 {

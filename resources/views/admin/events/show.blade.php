@@ -185,11 +185,10 @@
                     </div>
 
                     {{-- QR Code (only if approved) --}}
-                    @if($event->status == 'approved' && $event->qr_path)
+                    @if($event->status == 'approved' && $event->qr_code_token)
                     <div class="mb-4">
                         <p class="info-label"><i class="bi bi-qr-code me-1"></i> QR Code</p>
-                        <a href="{{ asset('storage/'.$event->qr_path) }}"
-                           download="event_{{ $event->e_id }}_qr.svg"
+                        <a href="/admin/events/{{ $event->e_id }}/qr"
                            class="btn btn-outline-primary btn-sm">
                             <i class="bi bi-download me-1"></i> Download QR Code
                         </a>

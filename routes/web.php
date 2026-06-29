@@ -64,6 +64,7 @@ Route::get('/organizer/proposals/create', [OrganizerController::class, 'createPr
 Route::get('/organizer/proposals/{id}', [OrganizerController::class, 'showProposal']);
 Route::post('/organizer/proposals', [OrganizerController::class, 'storeProposal']);
 Route::get('/organizer/events/approved', [OrganizerController::class, 'approvedEvents']);
+Route::get('/organizer/events/{id}/qr', [OrganizerController::class, 'downloadQr']);
 Route::get('/organizer/events/{id}', [OrganizerController::class, 'showEvent']);
 Route::get('/organizer/ideas', [OrganizerController::class, 'ideas']);
 Route::get('/organizer/profile', [OrganizerController::class, 'profile']);
@@ -107,6 +108,7 @@ Route::post('/admin/events/{id}/approve', [AdminController::class, 'approveEvent
 Route::post('/admin/events/{id}/reject', [AdminController::class, 'rejectEvent']);
 Route::get('/admin/events/{id}/edit', [AdminController::class, 'editEvent']);
 Route::post('/admin/events/{id}/edit', [AdminController::class, 'updateEvent']);
+Route::get('/admin/events/{id}/qr', [AdminController::class, 'downloadQr']);
 Route::get('/admin/events/{id}', [AdminController::class, 'viewEvent']);
 
 Route::get('/attendance/{token}', [AttendanceController::class, 'show']);

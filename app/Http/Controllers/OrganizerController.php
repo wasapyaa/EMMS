@@ -332,6 +332,29 @@ public function showEvent($id)
     return view('organizer.events.show', compact('event', 'attendances'));
 }
 
+    public function downloadQr($id)
+    {
+        $organizerId = session('organizer_id');
+
+        $event = Event::where('e_id', $id)
+            ->where('o_id', $organizerId)
+            ->where('status', 'approved')
+            ->firstOrFail();
+
+        if (!$event->qr_code_token) {
+            abort(404, 'QR code not available for this event.');
+        }
+
+        $qrImage = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+            ->size(300)
+            ->generate($event->qr_code_token);
+
+        return response($qrImage, 200)
+            ->header('Content-Type', 'image/svg+xml')
+            ->header('Content-Disposition', 'attachment; filename="event_' . $event->e_id . '_qr.svg"');
+    }
+
+
 public function deleteProposal($id)
 {
     $organizerId = session('organizer_id');
