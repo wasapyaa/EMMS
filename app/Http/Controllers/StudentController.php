@@ -26,6 +26,7 @@ class StudentController extends Controller
         $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
 
         $semesters = DB::table('semester_merits')
+            ->where('s_id', $studentId)
             ->select('semester_name')
             ->distinct()
             ->orderByDesc('semester_name')
@@ -143,6 +144,7 @@ class StudentController extends Controller
         $selectedSemester = $request->input('semester', 'current');
 
         $semesters = DB::table('semester_merits')
+            ->where('s_id', $studentId)
             ->select('semester_name')
             ->distinct()
             ->orderByDesc('semester_name')
@@ -184,6 +186,7 @@ class StudentController extends Controller
         $selectedSemester = $request->input('semester', 'current');
 
         $semesters = DB::table('semester_merits')
+            ->where('s_id', $studentId)
             ->select('semester_name')
             ->distinct()
             ->orderByDesc('semester_name')

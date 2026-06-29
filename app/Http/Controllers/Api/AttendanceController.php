@@ -147,7 +147,13 @@ class AttendanceController extends Controller
     public function events(Request $request)
     {
         $semester = $request->query('semester', 'current');
-        $semesters = DB::table('semester_merits')
+        $s_id = $request->query('s_id');
+
+        $semestersQuery = DB::table('semester_merits');
+        if ($s_id) {
+            $semestersQuery->where('s_id', $s_id);
+        }
+        $semesters = $semestersQuery
             ->select('semester_name')
             ->orderByDesc('semester_name')
             ->pluck('semester_name')
@@ -218,6 +224,7 @@ class AttendanceController extends Controller
 
         $semester = $request->query('semester', 'current');
         $semesters = DB::table('semester_merits')
+            ->where('s_id', $s_id)
             ->select('semester_name')
             ->orderByDesc('semester_name')
             ->pluck('semester_name')
@@ -395,6 +402,7 @@ class AttendanceController extends Controller
         Student::saveDailyRankingSnapshot();
 
         $semesters = DB::table('semester_merits')
+            ->where('s_id', $s_id)
             ->select('semester_name')
             ->distinct()
             ->orderByDesc('semester_name')
