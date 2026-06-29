@@ -300,39 +300,42 @@ public function approveEvent(Request $request, $id)
         return back()->with('info', 'Event already approved');
     }
 
-    // 1. Set merit value
-    $event->merit_value = $request->merit_value;
+    // 1. Generate token dahulu
+    $qrToken = Str::uuid();
 
-    // 2. Approve
-    $event->status = 'approved';
-
-    // 3. Generate token
-    $event->qr_code_token = Str::uuid();
-
-    // 4. QR link (sementara)
-    $qrLink = $event->qr_code_token;
-
+    // 2. Cuba jana QR — jika gagal, HENTIKAN proses approval
     try {
-        // 5. Generate QR
         $qrImage = QrCode::format('svg')
-        ->size(300)
-        ->generate($qrLink);
+            ->size(300)
+            ->generate((string) $qrToken);
 
-        // 6. Simpan QR
-        $path = 'qrcode/event_'.$event->e_id.'.svg';
+        // 3. Simpan fail QR ke storage
+        $path = 'qrcode/event_' . $event->e_id . '.svg';
         Storage::disk('public')->put($path, $qrImage);
 
-        // 7. Simpan path
-        $event->qr_path = $path;
+        // 4. Pastikan fail benar-benar wujud selepas disimpan
+        if (!Storage::disk('public')->exists($path)) {
+            throw new \Exception('QR file was not saved correctly to storage.');
+        }
+
     } catch (\Throwable $e) {
-        // If QR fails, still approve but log error
+        // QR gagal — jangan approve, tunjukkan error yang jelas kepada Admin
         \Log::error('QR Code generation failed for event ' . $event->e_id . ': ' . $e->getMessage());
-        // Still save without QR
+
+        return back()->with('error',
+            '❌ Event approval GAGAL. QR Code tidak dapat dijanakan: ' . $e->getMessage() .
+            '. Sila semak konfigurasi server (storage:link, library QR) dan cuba semula.'
+        );
     }
 
+    // 5. Semua OK — barulah simpan status approved
+    $event->merit_value   = $request->merit_value;
+    $event->status        = 'approved';
+    $event->qr_code_token = $qrToken;
+    $event->qr_path       = $path;
     $event->save();
 
-    return back()->with('success', 'Event approved with ' . $request->merit_value . ' merit points & QR generated');
+    return back()->with('success', '✅ Event approved dengan ' . $request->merit_value . ' merit point & QR Code berjaya dijanakan!');
 }
 
 
