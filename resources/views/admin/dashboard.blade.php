@@ -35,7 +35,7 @@
 <div class="row g-4 mb-4">
     <div class="col-md-4">
         <div class="stat-card bg-merit">
-            <h6>Total Students</h6>
+            <h6>Active Students (Current Sem)</h6>
             <h2 class="fw-bold">{{ $totalStudents }}</h2>
         </div>
     </div>

@@ -32,7 +32,14 @@ class StudentController extends Controller
             ->orderByDesc('semester_name')
             ->pluck('semester_name');
 
-        $totalStudents = Student::count();
+        if ($selectedSemester !== 'current') {
+            $totalStudents = DB::table('semester_merits')
+                ->where('semester_name', $selectedSemester)
+                ->where('total_merit', '>', 0)
+                ->count();
+        } else {
+            $totalStudents = Student::where('current_semester_active', true)->count();
+        }
 
         if ($selectedSemester !== 'current') {
             // 1️⃣ TOTAL MERIT (Past Semester)

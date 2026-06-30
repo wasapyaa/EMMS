@@ -23,7 +23,7 @@ class AdminController extends Controller
 {
     public function dashboard()
 {
-    $totalStudents  = Student::count();
+    $totalStudents  = Student::where('current_semester_active', true)->count();
     $totalOrganizers = Organizer::count();
     $totalEvents    = Event::count();
     $eligibleStudents = Setting::where('key', 'hostel_eligible_students')->value('value');
@@ -95,7 +95,7 @@ class AdminController extends Controller
 
         if ($selectedSemester !== 'current') {
             $students = DB::table('students')
-                ->leftJoin('semester_merits', function($join) use ($selectedSemester) {
+                ->join('semester_merits', function($join) use ($selectedSemester) {
                     $join->on('semester_merits.s_id', '=', 'students.s_id')
                          ->where('semester_merits.semester_name', '=', $selectedSemester);
                 })
@@ -104,19 +104,21 @@ class AdminController extends Controller
                     'students.name',
                     'students.num_matrics',
                     'students.email',
-                    DB::raw('COALESCE(SUM(semester_merits.total_merit), 0) as total_merit')
+                    'semester_merits.total_merit'
                 )
+                ->where('semester_merits.total_merit', '>', 0)
                 ->when($search, function ($q) use ($search) {
                     $q->where(function($query) use ($search) {
                         $query->where('students.name', 'like', "%$search%")
                               ->orWhere('students.num_matrics', 'like', "%$search%");
                     });
                 })
-                ->groupBy('students.s_id', 'students.name', 'students.num_matrics', 'students.email')
+                ->groupBy('students.s_id', 'students.name', 'students.num_matrics', 'students.email', 'semester_merits.total_merit')
                 ->orderByDesc('total_merit')
                 ->get();
         } else {
             $students = DB::table('students')
+                ->where('students.current_semester_active', true)
                 ->leftJoin('merit_logs', function($join) {
                     $join->on('merit_logs.s_id', '=', 'students.s_id')
                          ->where('merit_logs.semester_name', '=', 'current');
@@ -148,20 +150,22 @@ class AdminController extends Controller
 
         if ($selectedSemester !== 'current') {
             $students = DB::table('students')
-                ->leftJoin('semester_merits', function($join) use ($selectedSemester) {
+                ->join('semester_merits', function($join) use ($selectedSemester) {
                     $join->on('semester_merits.s_id', '=', 'students.s_id')
                          ->where('semester_merits.semester_name', '=', $selectedSemester);
                 })
                 ->select(
                     'students.name',
                     'students.num_matrics',
-                    DB::raw('COALESCE(SUM(semester_merits.total_merit), 0) as total_merit')
+                    'semester_merits.total_merit'
                 )
-                ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
+                ->where('semester_merits.total_merit', '>', 0)
+                ->groupBy('students.s_id', 'students.name', 'students.num_matrics', 'semester_merits.total_merit')
                 ->orderByDesc('total_merit')
                 ->get();
         } else {
             $students = DB::table('students')
+                ->where('students.current_semester_active', true)
                 ->leftJoin('merit_logs', function($join) {
                     $join->on('merit_logs.s_id', '=', 'students.s_id')
                          ->where('merit_logs.semester_name', '=', 'current');
@@ -691,8 +695,9 @@ public function updateEvent(Request $request, $id)
 
         $semesterName = $request->semester_name;
 
-        // 1. Get current merits for all students (current semester only)
+        // 1. Get current merits for active students (current semester only)
         $students = DB::table('students')
+            ->where('students.current_semester_active', true)
             ->leftJoin('merit_logs', function($join) {
                 $join->on('merit_logs.s_id', '=', 'students.s_id')
                      ->where('merit_logs.semester_name', '=', 'current');
@@ -749,9 +754,11 @@ public function updateEvent(Request $request, $id)
             'current_semester_active' => false
         ]);
         
-        // 4. Archive attendances to semester_attendances (current semester only)
+        // 4. Archive attendances to semester_attendances (current semester only, for active students)
         $attendances = DB::table('attendances')
             ->join('events', 'attendances.e_id', '=', 'events.e_id')
+            ->join('students', 'attendances.s_id', '=', 'students.s_id')
+            ->where('students.current_semester_active', true)
             ->where('attendances.semester_name', 'current')
             ->select(
                 'attendances.s_id',
