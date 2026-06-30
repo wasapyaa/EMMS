@@ -107,7 +107,6 @@ class AdminController extends Controller
                     'students.email',
                     'semester_merits.total_merit'
                 )
-                ->where('semester_merits.total_merit', '>', 0)
                 ->when($search, function ($q) use ($search) {
                     $q->where(function($query) use ($search) {
                         $query->where('students.name', 'like', "%$search%")
@@ -160,7 +159,6 @@ class AdminController extends Controller
                     'students.num_matrics',
                     'semester_merits.total_merit'
                 )
-                ->where('semester_merits.total_merit', '>', 0)
                 ->groupBy('students.s_id', 'students.name', 'students.num_matrics', 'semester_merits.total_merit')
                 ->orderByDesc('total_merit')
                 ->get();

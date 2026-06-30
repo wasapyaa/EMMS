@@ -35,7 +35,6 @@ class StudentController extends Controller
         if ($selectedSemester !== 'current') {
             $totalStudents = DB::table('semester_merits')
                 ->where('semester_name', $selectedSemester)
-                ->where('total_merit', '>', 0)
                 ->count();
         } else {
             $totalStudents = Student::where('current_semester_active', true)->count();
