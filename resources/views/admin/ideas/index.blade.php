@@ -35,13 +35,13 @@
         <table class="table align-middle mb-0">
             <thead style="background:#f8f9fa;">
                 <tr>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 25%;">Idea Title</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 30%;">Description</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 15%;">Student</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 10%; text-align: center;">Net Score</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 12%; text-align: center;">Reports</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 10%;">Status</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 12%;">Date</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 22%;">Idea Title</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 28%;">Description</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 16%;">Student</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 8%; text-align: center;">Net Score</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 8%; text-align: center;">Reports</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 8%;">Status</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 10%;">Date</th>
                 </tr>
             </thead>
             <tbody>
@@ -80,7 +80,7 @@
                     <td align="center">
                         @if($idea->reports_count >= 5)
                             <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle rounded-pill px-2.5 py-1.5 fw-bold" style="font-size: 0.75rem;">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ $idea->reports_count }} (Hidden)
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ $idea->reports_count }}
                             </span>
                         @elseif($idea->reports_count > 0)
                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 fw-semibold" style="font-size: 0.78rem;">
@@ -95,7 +95,7 @@
                             {{ ucfirst($idea->status) }}
                         </span>
                     </td>
-                    <td class="text-secondary fw-medium" style="font-size: 0.85rem;">
+                    <td class="text-secondary fw-medium" style="font-size: 0.85rem; white-space: nowrap;">
                         {{ $idea->created_at->format('d M Y, h:i A') }}
                     </td>
                 </tr>

@@ -34,12 +34,12 @@
         <table class="table align-middle mb-0">
             <thead style="background:#f8f9fa;">
                 <tr>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 25%;">Idea Title</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 35%;">Description</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 22%;">Idea Title</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 30%;">Description</th>
                     <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 18%;">Suggested By</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 10%; text-align: center;">Net Score</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 10%; text-align: center;">Reports</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 12%;">Date</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 8%; text-align: center;">Net Score</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 8%; text-align: center;">Reports</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 16%;">Date</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,7 +84,7 @@
                             <span class="text-muted" style="font-size:0.85rem;">-</span>
                         @endif
                     </td>
-                    <td class="text-secondary fw-medium" style="font-size: 0.85rem;">
+                    <td class="text-secondary fw-medium" style="font-size: 0.85rem; white-space: nowrap;">
                         {{ $idea->created_at->format('d M Y, h:i A') }}
                     </td>
                 </tr>
