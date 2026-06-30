@@ -351,9 +351,9 @@
                             @endif
                         </td>
                         <td>
-                            @if($att->status == 'present')
+                            @if($att->status == 'present' || $att->status == 'success')
                                 <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                    <i class="bi bi-check-circle-fill me-1"></i>Present
+                                    <i class="bi bi-check-circle-fill me-1"></i>Hadir
                                 </span>
                             @else
                                 <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
@@ -368,22 +368,11 @@
         </div>
 
         {{-- Summary footer --}}
-        <div class="px-4 py-3 bg-light border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="px-4 py-3 bg-light border-top">
             <small class="text-muted">
                 <i class="bi bi-info-circle me-1"></i>
                 Total <strong>{{ $attendances->count() }}</strong> student(s) have scanned the QR code for this event.
             </small>
-            <div>
-                <span class="badge bg-success me-1">
-                    <i class="bi bi-check-circle me-1"></i>
-                    {{ $attendances->where('status', 'present')->count() }} Present
-                </span>
-                @if($attendances->whereNotIn('status', ['present'])->count() > 0)
-                <span class="badge bg-warning text-dark">
-                    {{ $attendances->whereNotIn('status', ['present'])->count() }} Other
-                </span>
-                @endif
-            </div>
         </div>
 
         @else

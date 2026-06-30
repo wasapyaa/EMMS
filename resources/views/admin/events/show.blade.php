@@ -326,9 +326,15 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                <i class="bi bi-check-circle-fill me-1"></i>{{ ucfirst($att->status ?? 'success') }}
-                            </span>
+                            @if($att->status == 'present' || $att->status == 'success')
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Hadir
+                                </span>
+                            @else
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                    <i class="bi bi-clock-fill me-1"></i>{{ ucfirst($att->status ?? 'N/A') }}
+                                </span>
+                            @endif
                         </td>
                     </tr>
                 @endforeach
