@@ -20,26 +20,41 @@
     </h5>
 </div>
 
-<!-- Filter Buttons -->
+<!-- Filter Buttons & Semester Dropdown -->
 <div class="content-box mb-4">
-    <div class="d-flex gap-2">
-        <a href="/admin/events"
-           class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 {{ !$filter ? 'btn-primary' : 'btn-light border text-muted' }}">
-           <i class="bi bi-grid"></i> All
-        </a>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex gap-2">
+            <a href="/admin/events?semester={{ $selectedSemester }}"
+               class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 {{ !$filter ? 'btn-primary' : 'btn-light border text-muted' }}">
+               <i class="bi bi-grid"></i> All
+            </a>
 
-        <a href="/admin/events?status=pending"
-           class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 {{ $filter=='pending' ? 'btn-primary' : 'btn-light border text-muted' }}">
-           <i class="bi bi-clock"></i> New Requests 
-           @if($pendingCount > 0)
-               <span class="badge bg-danger ms-1" style="font-size: 0.7rem; padding: 0.25em 0.5em;">{{ $pendingCount }}</span>
-           @endif
-        </a>
+            <a href="/admin/events?status=pending&semester={{ $selectedSemester }}"
+               class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 {{ $filter=='pending' ? 'btn-primary' : 'btn-light border text-muted' }}">
+               <i class="bi bi-clock"></i> New Requests 
+               @if($pendingCount > 0)
+                   <span class="badge bg-danger ms-1" style="font-size: 0.7rem; padding: 0.25em 0.5em;">{{ $pendingCount }}</span>
+               @endif
+            </a>
 
-        <a href="/admin/events?status=approved"
-           class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 {{ $filter=='approved' ? 'btn-primary' : 'btn-light border text-muted' }}">
-           <i class="bi bi-check-circle"></i> Approved Events
-        </a>
+            <a href="/admin/events?status=approved&semester={{ $selectedSemester }}"
+               class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 {{ $filter=='approved' ? 'btn-primary' : 'btn-light border text-muted' }}">
+               <i class="bi bi-check-circle"></i> Approved Events
+            </a>
+        </div>
+
+        <form method="GET" class="d-flex align-items-center gap-2">
+            @if($filter)
+                <input type="hidden" name="status" value="{{ $filter }}">
+            @endif
+            <label class="small text-muted fw-bold text-nowrap">Semester:</label>
+            <select name="semester" class="form-select form-select-sm" onchange="this.form.submit()" style="max-width: 250px;">
+                <option value="current" {{ $selectedSemester == 'current' ? 'selected' : '' }}>Current Semester</option>
+                @foreach($semesters as $sem)
+                    <option value="{{ $sem }}" {{ $selectedSemester == $sem ? 'selected' : '' }}>{{ $sem }}</option>
+                @endforeach
+            </select>
+        </form>
     </div>
 </div>
 

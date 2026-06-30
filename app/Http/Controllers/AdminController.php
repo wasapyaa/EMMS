@@ -408,8 +408,15 @@ public function viewOrganizer($id)
     public function manageEvents(Request $request)
 {
     $filter = $request->get('status'); // pending / approved
+    $selectedSemester = $request->input('semester', 'current');
 
-    $events = Event::where('semester_name', 'current')
+    $semesters = DB::table('semester_merits')
+        ->select('semester_name')
+        ->distinct()
+        ->orderByDesc('semester_name')
+        ->pluck('semester_name');
+
+    $events = Event::where('semester_name', $selectedSemester)
         ->when($filter, function ($q) use ($filter) {
             $q->where('status', $filter);
         })
@@ -423,7 +430,9 @@ public function viewOrganizer($id)
     return view('admin.events.index', compact(
         'events',
         'filter',
-        'pendingCount'
+        'pendingCount',
+        'semesters',
+        'selectedSemester'
     ));
 }
 
