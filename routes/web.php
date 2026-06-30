@@ -58,58 +58,58 @@ Route::post('/organizer/reset-password', [AuthController::class, 'organizerReset
 
 
 
-Route::get('/organizer/dashboard', [OrganizerController::class, 'dashboard']);
-Route::get('/organizer/proposals', [OrganizerController::class, 'proposalList']);
-Route::get('/organizer/proposals/create', [OrganizerController::class, 'createProposal']);
-Route::get('/organizer/proposals/{id}', [OrganizerController::class, 'showProposal']);
-Route::post('/organizer/proposals', [OrganizerController::class, 'storeProposal']);
-Route::get('/organizer/events/approved', [OrganizerController::class, 'approvedEvents']);
-Route::get('/organizer/events/{id}', [OrganizerController::class, 'showEvent']);
-Route::get('/organizer/ideas', [OrganizerController::class, 'ideas']);
-Route::get('/organizer/profile', [OrganizerController::class, 'profile']);
-Route::post('/organizer/profile/update', [OrganizerController::class, 'updateProfile']);
-Route::post('/organizer/profile/password', [OrganizerController::class, 'updatePassword']);
+Route::middleware(['organizer.auth'])->group(function () {
+    Route::get('/organizer/dashboard', [OrganizerController::class, 'dashboard']);
+    Route::get('/organizer/proposals', [OrganizerController::class, 'proposalList']);
+    Route::get('/organizer/proposals/create', [OrganizerController::class, 'createProposal']);
+    Route::get('/organizer/proposals/{id}', [OrganizerController::class, 'showProposal']);
+    Route::post('/organizer/proposals', [OrganizerController::class, 'storeProposal']);
+    Route::get('/organizer/events/approved', [OrganizerController::class, 'approvedEvents']);
+    Route::get('/organizer/events/{id}', [OrganizerController::class, 'showEvent']);
+    Route::get('/organizer/ideas', [OrganizerController::class, 'ideas']);
+    Route::get('/organizer/profile', [OrganizerController::class, 'profile']);
+    Route::post('/organizer/profile/update', [OrganizerController::class, 'updateProfile']);
+    Route::post('/organizer/profile/password', [OrganizerController::class, 'updatePassword']);
 
-Route::get('/organizer/proposals/{id}/edit', [OrganizerController::class, 'editProposal']);
-Route::post('/organizer/proposals/{id}/update', [OrganizerController::class, 'updateProposal']);
-Route::delete('/organizer/proposals/{id}', [OrganizerController::class, 'deleteProposal']);
-Route::get('/organizer/events/{id}/download-qr', [OrganizerController::class, 'downloadQr']);
-
-
-
-Route::prefix('admin')->group(function () {
-
-    Route::get('/dashboard', [AdminController::class, 'dashboard']);
-    Route::get('/hostel', [AdminController::class, 'hostel']);
-    Route::post('/hostel-eligibility', [AdminController::class, 'updateHostelEligibility']);
-    Route::get('/profile', [AdminController::class, 'profile']);
-    Route::post('/profile', [AdminController::class, 'updateProfile']);
-    Route::get('/merit', [AdminController::class, 'viewMerit']);
-    Route::get('/merit/export', [AdminController::class, 'exportMerit']);
-    Route::get('/merit/{id}', [AdminController::class, 'viewStudentMerit']);
-    Route::get('/organizers', [AdminController::class, 'organizers']);
-    Route::get('/events', [AdminController::class, 'events']);
-    Route::get('/ideas', [AdminController::class, 'ideas']);
-    Route::get('/reset', [AdminController::class, 'reset']);
-    Route::post('/reset', [AdminController::class, 'processReset']);
-
+    Route::get('/organizer/proposals/{id}/edit', [OrganizerController::class, 'editProposal']);
+    Route::post('/organizer/proposals/{id}/update', [OrganizerController::class, 'updateProposal']);
+    Route::delete('/organizer/proposals/{id}', [OrganizerController::class, 'deleteProposal']);
+    Route::get('/organizer/events/{id}/download-qr', [OrganizerController::class, 'downloadQr']);
 });
 
-Route::get('/admin/send-reminder', [AdminController::class, 'showSendReminder']);
-Route::post('/admin/send-reminder', [AdminController::class, 'sendReminderToAll']);
+Route::middleware(['admin.auth'])->group(function () {
+    Route::prefix('admin')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard']);
+        Route::get('/hostel', [AdminController::class, 'hostel']);
+        Route::post('/hostel-eligibility', [AdminController::class, 'updateHostelEligibility']);
+        Route::get('/profile', [AdminController::class, 'profile']);
+        Route::post('/profile', [AdminController::class, 'updateProfile']);
+        Route::get('/merit', [AdminController::class, 'viewMerit']);
+        Route::get('/merit/export', [AdminController::class, 'exportMerit']);
+        Route::get('/merit/{id}', [AdminController::class, 'viewStudentMerit']);
+        Route::get('/organizers', [AdminController::class, 'organizers']);
+        Route::get('/events', [AdminController::class, 'events']);
+        Route::get('/ideas', [AdminController::class, 'ideas']);
+        Route::get('/reset', [AdminController::class, 'reset']);
+        Route::post('/reset', [AdminController::class, 'processReset']);
+    });
 
-Route::get('/admin/organizers', [AdminController::class, 'manageOrganizers']);
-Route::post('/admin/organizers/{id}/approve', [AdminController::class, 'approveOrganizer']);
-Route::post('/admin/organizers/{id}/reject', [AdminController::class, 'rejectOrganizer']);
-Route::get('/admin/organizers/{id}', [AdminController::class, 'viewOrganizer']);
+    Route::get('/admin/send-reminder', [AdminController::class, 'showSendReminder']);
+    Route::post('/admin/send-reminder', [AdminController::class, 'sendReminderToAll']);
 
-Route::get('/admin/events', [AdminController::class, 'manageEvents']);
-Route::post('/admin/events/{id}/approve', [AdminController::class, 'approveEvent']);
-Route::post('/admin/events/{id}/reject', [AdminController::class, 'rejectEvent']);
-Route::get('/admin/events/{id}/edit', [AdminController::class, 'editEvent']);
-Route::post('/admin/events/{id}/edit', [AdminController::class, 'updateEvent']);
-Route::get('/admin/events/{id}', [AdminController::class, 'viewEvent']);
-Route::get('/admin/events/{id}/download-qr', [AdminController::class, 'downloadQr']);
+    Route::get('/admin/organizers', [AdminController::class, 'manageOrganizers']);
+    Route::post('/admin/organizers/{id}/approve', [AdminController::class, 'approveOrganizer']);
+    Route::post('/admin/organizers/{id}/reject', [AdminController::class, 'rejectOrganizer']);
+    Route::get('/admin/organizers/{id}', [AdminController::class, 'viewOrganizer']);
+
+    Route::get('/admin/events', [AdminController::class, 'manageEvents']);
+    Route::post('/admin/events/{id}/approve', [AdminController::class, 'approveEvent']);
+    Route::post('/admin/events/{id}/reject', [AdminController::class, 'rejectEvent']);
+    Route::get('/admin/events/{id}/edit', [AdminController::class, 'editEvent']);
+    Route::post('/admin/events/{id}/edit', [AdminController::class, 'updateEvent']);
+    Route::get('/admin/events/{id}', [AdminController::class, 'viewEvent']);
+    Route::get('/admin/events/{id}/download-qr', [AdminController::class, 'downloadQr']);
+});
 
 Route::get('/attendance/{token}', [AttendanceController::class, 'show']);
 Route::post('/attendance/{token}', [AttendanceController::class, 'confirm']);

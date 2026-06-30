@@ -12,7 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'organizer.auth' => \App\Http\Middleware\OrganizerSession::class,
+            'admin.auth' => \App\Http\Middleware\AdminSession::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
