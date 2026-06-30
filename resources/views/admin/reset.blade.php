@@ -27,7 +27,7 @@
             {{-- Academic Session --}}
             <div class="mb-3">
                 <label class="form-label fw-bold">
-                    <i class="bi bi-calendar me-1"></i> Enter New Academic Session
+                    <i class="bi bi-calendar me-1"></i> Enter Current Academic Session
                 </label>
                 <input type="text" class="form-control" name="semester_name" placeholder="e.g. 2024/2025 Semester 1" required>
                 <div class="form-text">The current merit points will be saved under this semester name before resetting.</div>
