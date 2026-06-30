@@ -80,11 +80,11 @@
         <a href="/organizer/dashboard">
             <i class="bi bi-speedometer2 me-2"></i> Dashboard
         </a>
-        <a href="/organizer/proposals">
-            <i class="bi bi-file-earmark-text me-2"></i> List Proposal
-        </a>
         <a href="/organizer/proposals/create">
             <i class="bi bi-plus-circle me-2"></i> Submit Proposal
+        </a>
+        <a href="/organizer/proposals">
+            <i class="bi bi-file-earmark-text me-2"></i> List Proposal
         </a>
         <a href="/organizer/events/approved">
             <i class="bi bi-check-circle me-2"></i> Approved Events
