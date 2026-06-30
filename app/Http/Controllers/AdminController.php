@@ -383,20 +383,29 @@ public function viewEvent($id)
             abort(404, 'QR code not available for this event.');
         }
 
-        // Generate QR code as PNG image bytes
-        $qrPngBytes = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-            ->size(300)
-            ->margin(1)
-            ->generate($event->qr_code_token);
-
-        // Load QR image into GD
-        $qrImg = imagecreatefromstring($qrPngBytes);
-        if (!$qrImg) {
-            abort(500, 'Failed to process QR code image.');
+        // Generate QR code matrix using BaconQrCode (runs purely in PHP, no Imagick needed)
+        try {
+            $qrCode = \BaconQrCode\Encoder\Encoder::encode($event->qr_code_token, \BaconQrCode\Common\ErrorCorrectionLevel::M());
+            $matrix = $qrCode->getMatrix();
+        } catch (\Throwable $e) {
+            \Log::error('QR Matrix encoding failed: ' . $e->getMessage());
+            abort(500, 'Failed to generate QR Code matrix.');
         }
 
-        $qrWidth = imagesx($qrImg);
-        $qrHeight = imagesy($qrImg);
+        $matrixWidth = $matrix->getWidth();
+        $matrixHeight = $matrix->getHeight();
+
+        $marginModules = 4;
+        $totalModulesX = $matrixWidth + ($marginModules * 2);
+        $totalModulesY = $matrixHeight + ($marginModules * 2);
+
+        $moduleSize = (int) floor(300 / $totalModulesX);
+        if ($moduleSize < 1) {
+            $moduleSize = 1;
+        }
+
+        $qrWidth = $totalModulesX * $moduleSize;
+        $qrHeight = $totalModulesY * $moduleSize;
 
         // Text wrapping and dimensions calculation
         $text = $event->title;
@@ -413,7 +422,19 @@ public function viewEvent($id)
         $black = imagecolorallocate($canvas, 0, 0, 0);
 
         imagefill($canvas, 0, 0, $white);
-        imagecopy($canvas, $qrImg, 0, 0, 0, 0, $qrWidth, $qrHeight);
+
+        // Draw QR Modules
+        for ($y = 0; $y < $matrixHeight; $y++) {
+            for ($x = 0; $x < $matrixWidth; $x++) {
+                if ($matrix->get($x, $y)) {
+                    $x1 = ($x + $marginModules) * $moduleSize;
+                    $y1 = ($y + $marginModules) * $moduleSize;
+                    $x2 = $x1 + $moduleSize - 1;
+                    $y2 = $y1 + $moduleSize - 1;
+                    imagefilledrectangle($canvas, $x1, $y1, $x2, $y2, $black);
+                }
+            }
+        }
 
         // Draw centered wrapped text
         $fontSize = 4; // Built-in GD font size
@@ -432,7 +453,6 @@ public function viewEvent($id)
         $jpgBytes = ob_get_clean();
 
         // Clean up resources
-        imagedestroy($qrImg);
         imagedestroy($canvas);
 
         $safeName = \Illuminate\Support\Str::slug($event->title) . '_qr.jpg';
