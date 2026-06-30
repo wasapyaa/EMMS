@@ -71,8 +71,18 @@ public function showLogin()
 
 public function logout(Request $request)
 {
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
+    $role = session('role');
+
+    if ($role === 'organizer') {
+        session()->forget(['organizer_id', 'role']);
+    } elseif ($role === 'admin') {
+        session()->forget(['admin_id', 'role']);
+    } elseif ($role === 'student') {
+        session()->forget(['user_id', 'role']);
+    } else {
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
 
     return redirect('/login');
 }
