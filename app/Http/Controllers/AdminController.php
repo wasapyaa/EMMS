@@ -103,6 +103,7 @@ class AdminController extends Controller
                     'students.s_id',
                     'students.name',
                     'students.num_matrics',
+                    'students.email',
                     DB::raw('COALESCE(SUM(semester_merits.total_merit), 0) as total_merit')
                 )
                 ->when($search, function ($q) use ($search) {
@@ -111,7 +112,7 @@ class AdminController extends Controller
                               ->orWhere('students.num_matrics', 'like', "%$search%");
                     });
                 })
-                ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
+                ->groupBy('students.s_id', 'students.name', 'students.num_matrics', 'students.email')
                 ->orderByDesc('total_merit')
                 ->get();
         } else {
@@ -124,6 +125,7 @@ class AdminController extends Controller
                     'students.s_id',
                     'students.name',
                     'students.num_matrics',
+                    'students.email',
                     DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
                 )
                 ->when($search, function ($q) use ($search) {
@@ -132,7 +134,7 @@ class AdminController extends Controller
                               ->orWhere('students.num_matrics', 'like', "%$search%");
                     });
                 })
-                ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
+                ->groupBy('students.s_id', 'students.name', 'students.num_matrics', 'students.email')
                 ->orderByDesc('total_merit')
                 ->get();
         }
@@ -158,7 +160,6 @@ class AdminController extends Controller
                 ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
                 ->orderByDesc('total_merit')
                 ->get();
-            $csvFileName = 'student-merit-list-'. Str::slug($selectedSemester) .'-' . date('Y-m-d') . '.csv';
         } else {
             $students = DB::table('students')
                 ->leftJoin('merit_logs', function($join) {
@@ -173,34 +174,150 @@ class AdminController extends Controller
                 ->groupBy('students.s_id', 'students.name', 'students.num_matrics')
                 ->orderByDesc('total_merit')
                 ->get();
-            $csvFileName = 'student-merit-list-current-' . date('Y-m-d') . '.csv';
         }
 
-    $headers = [
-        "Content-type"        => "text/csv",
-        "Content-Disposition" => "attachment; filename=$csvFileName",
-        "Pragma"              => "no-cache",
-        "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-        "Expires"             => "0"
-    ];
+        $xlsFileName = 'student-merit-list-' . ($selectedSemester !== 'current' ? Str::slug($selectedSemester) : 'current') . '-' . date('Y-m-d') . '.xls';
 
-    $callback = function() use($students) {
-        $file = fopen('php://output', 'w');
-        fputcsv($file, ['No', 'Student Name', 'Matric No', 'Total Merit']);
+        $headers = [
+            "Content-type"        => "application/vnd.ms-excel; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=$xlsFileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
 
-        foreach ($students as $index => $row) {
-            fputcsv($file, [
-                $index + 1,
-                $row->name,
-                $row->num_matrics,
-                $row->total_merit
-            ]);
-        }
-        fclose($file);
-    };
+        $totalStudents = count($students);
+        $semesterText = $selectedSemester === 'current' ? 'Current Semester' : $selectedSemester;
+        $dateText = date('d M Y, h:i A');
 
-    return response()->stream($callback, 200, $headers);
-}
+        $callback = function() use($students, $semesterText, $dateText, $totalStudents) {
+            $file = fopen('php://output', 'w');
+            
+            // Output HTML structure formatted for Microsoft Excel in UiTM Purple/Corporate Theme
+            $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=utf-8" />
+<style>
+    table {
+        border-collapse: collapse;
+        font-family: \'Segoe UI\', Arial, sans-serif;
+    }
+    .univ-title {
+        font-size: 10pt;
+        font-weight: bold;
+        color: #481061; /* UiTM Purple */
+    }
+    .dept-title {
+        font-size: 9pt;
+        font-weight: bold;
+        color: #555555;
+    }
+    .report-title {
+        font-size: 14pt;
+        font-weight: bold;
+        color: #481061;
+        padding-top: 5px;
+    }
+    .section-title {
+        font-size: 10pt;
+        font-weight: bold;
+        color: #481061;
+        border-bottom: 2px solid #481061;
+    }
+    .meta-label {
+        font-size: 9.5pt;
+        font-weight: bold;
+        color: #444444;
+    }
+    .meta-value {
+        font-size: 9.5pt;
+        color: #111111;
+    }
+    th {
+        background-color: #481061;
+        color: #ffffff;
+        font-weight: bold;
+        border: 1px solid #cccccc;
+        padding: 8px 12px;
+        font-size: 11pt;
+    }
+    td {
+        border: 1px solid #cccccc;
+        padding: 6px 10px;
+        font-size: 10pt;
+    }
+    .row-even {
+        background-color: #ffffff;
+    }
+    .row-odd {
+        background-color: #fbf8fc; /* Soft purple zebra striping */
+    }
+    .num-matric {
+        mso-number-format:"\@"; /* Excel-specific format to force plain text */
+    }
+</style>
+</head>
+<body>
+    <table>
+        <tr>
+            <td colspan="4" class="univ-title" style="border:none;">UNIVERSITI TEKNOLOGI MARA (UiTM)</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="dept-title" style="border:none;">BAHAGIAN HAL EHWAL PELAJAR (HEP)</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="report-title" style="border:none;">STUDENT MERIT SUMMARY REPORT</td>
+        </tr>
+        <tr><td colspan="4" style="border:none; height:10px;"></td></tr>
+        
+        <tr>
+            <td colspan="4" class="section-title" style="border:none;"><b>REPORT INFORMATION</b></td>
+        </tr>
+        <tr>
+            <td class="meta-label" style="border:none;">Semester:</td>
+            <td class="meta-value" style="border:none;">' . htmlspecialchars($semesterText) . '</td>
+            <td class="meta-label" style="border:none;">Total Students:</td>
+            <td class="meta-value" style="border:none;">' . $totalStudents . '</td>
+        </tr>
+        <tr>
+            <td class="meta-label" style="border:none;">Exported At:</td>
+            <td class="meta-value" style="border:none;" colspan="3">' . $dateText . '</td>
+        </tr>
+        <tr><td colspan="4" style="border:none; height:15px;"></td></tr>
+        
+        <thead>
+            <tr>
+                <th width="60">No.</th>
+                <th width="280">Student Name</th>
+                <th width="160">Matric No.</th>
+                <th width="120">Total Merit</th>
+            </tr>
+        </thead>
+        <tbody>';
+
+            foreach ($students as $index => $row) {
+                $rowClass = ($index % 2 === 0) ? 'row-even' : 'row-odd';
+                $html .= '
+                <tr class="' . $rowClass . '">
+                    <td align="center">' . ($index + 1) . '</td>
+                    <td>' . htmlspecialchars($row->name) . '</td>
+                    <td class="num-matric" align="center">' . htmlspecialchars($row->num_matrics) . '</td>
+                    <td align="center">' . intval($row->total_merit) . '</td>
+                </tr>';
+            }
+
+            $html .= '
+            </tbody>
+        </table>
+    </body>
+    </html>';
+
+            fwrite($file, $html);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 
 public function viewStudentMerit($id)
 {
