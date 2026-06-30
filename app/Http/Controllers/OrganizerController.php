@@ -27,17 +27,76 @@ class OrganizerController extends Controller
                                ->where('status', 'rejected')
                                ->count();
 
-        $recentEvents = Event::where('o_id', $organizerId)
-                             ->orderBy('created_at', 'desc')
-                             ->take(5)
-                             ->get();
+        // Participation Analytics
+        $approvedEventIds = Event::where('o_id', $organizerId)->where('status', 'approved')->pluck('e_id');
+        
+        $totalAttendees = Attendance::whereIn('e_id', $approvedEventIds)->count();
+        $averageAttendance = count($approvedEventIds) > 0 ? round($totalAttendees / count($approvedEventIds), 1) : 0;
+
+        $topEventRecord = Attendance::whereIn('e_id', $approvedEventIds)
+            ->select('e_id', \DB::raw('count(*) as attendee_count'))
+            ->groupBy('e_id')
+            ->orderByDesc('attendee_count')
+            ->first();
+
+        if ($topEventRecord) {
+            $topEvent = Event::find($topEventRecord->e_id);
+            $topEventName = $topEvent ? $topEvent->title : 'N/A';
+            $topEventCount = $topEventRecord->attendee_count;
+        } else {
+            $topEventName = '—';
+            $topEventCount = 0;
+        }
+
+        // Event Category Distribution Data with student participations
+        $categoriesList = ['Sport', 'Education', 'Entertainment', 'Social', 'Technical', 'Other'];
+        
+        $detailedAnalysis = [];
+        $chartLabels = [];
+        $chartData = [];
+        
+        foreach ($categoriesList as $cat) {
+            $eventsCount = Event::where('o_id', $organizerId)
+                ->where('status', 'approved')
+                ->where('category', $cat)
+                ->count();
+                
+            $eventIds = Event::where('o_id', $organizerId)
+                ->where('status', 'approved')
+                ->where('category', $cat)
+                ->pluck('e_id');
+                
+            $totalJoined = Attendance::whereIn('e_id', $eventIds)->count();
+            $avgEvent = $eventsCount > 0 ? round($totalJoined / $eventsCount, 1) : 0;
+            
+            if ($eventsCount > 0) {
+                $detailedAnalysis[] = [
+                    'category' => $cat,
+                    'events' => $eventsCount,
+                    'total_joined' => $totalJoined,
+                    'avg' => $avgEvent
+                ];
+                
+                $chartLabels[] = $cat;
+                $chartData[] = $totalJoined;
+            }
+        }
+
+        $hasData = count($chartData) > 0 && array_sum($chartData) > 0;
 
         return view('organizer.dashboard', compact(
             'totalProposals',
             'approvedEvents',
             'pendingEvents',
             'rejectedEvents',
-            'recentEvents'
+            'totalAttendees',
+            'averageAttendance',
+            'topEventName',
+            'topEventCount',
+            'chartLabels',
+            'chartData',
+            'hasData',
+            'detailedAnalysis'
         ));
     }
 
