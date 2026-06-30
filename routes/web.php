@@ -92,6 +92,7 @@ Route::middleware(['admin.auth'])->group(function () {
         Route::get('/ideas', [AdminController::class, 'ideas']);
         Route::get('/reset', [AdminController::class, 'reset']);
         Route::post('/reset', [AdminController::class, 'processReset']);
+        Route::post('/reset/undo', [AdminController::class, 'processUndoReset']);
     });
 
     Route::get('/admin/send-reminder', [AdminController::class, 'showSendReminder']);

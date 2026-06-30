@@ -34,7 +34,7 @@
             </div>
 
             {{-- Button --}}
-            <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to reset all merit points? This action cannot be undone.')">
+            <button type="submit" class="btn btn-danger w-100">
                 <i class="bi bi-exclamation-triangle me-1"></i> RESET ALL MERIT POINTS
             </button>
 
@@ -48,5 +48,24 @@
         </form>
     </div>
 </div>
+
+@if($lastArchivedSemester)
+<div class="d-flex justify-content-center mt-4">
+    <div class="content-box border-warning-subtle" style="max-width:520px; width:100%; border: 1px solid #ffe69c; background-color: #fffdf5; border-radius: 12px; padding: 20px;">
+        <h6 class="fw-bold text-warning-emphasis mb-2">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Undo Last Reset
+        </h6>
+        <p class="text-muted mb-3" style="font-size: 0.88rem;">
+            You can restore the merit points, active statuses, and attendance logs of the previous semester (<strong>{{ $lastArchivedSemester }}</strong>). This will merge them back as the current active semester.
+        </p>
+        <form action="{{ url('/admin/reset/undo') }}" method="POST" onsubmit="return confirm('Are you sure you want to undo the last reset? This will restore all student merits and overwrite any new activities in the current semester.')">
+            @csrf
+            <button type="submit" class="btn btn-warning w-100 fw-semibold text-dark">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> UNDO RESET FOR "{{ $lastArchivedSemester }}"
+            </button>
+        </form>
+    </div>
+</div>
+@endif
 
 @endsection

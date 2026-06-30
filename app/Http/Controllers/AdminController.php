@@ -676,7 +676,11 @@ public function updateEvent(Request $request, $id)
 
     public function reset()
     {
-        return view('admin.reset');
+        $lastArchivedSemester = DB::table('semester_merits')
+            ->orderByDesc('created_at')
+            ->value('semester_name');
+
+        return view('admin.reset', compact('lastArchivedSemester'));
     }
 
     public function processReset(Request $request)
@@ -722,6 +726,15 @@ public function updateEvent(Request $request, $id)
         DB::table('merit_logs')
             ->where('semester_name', 'current')
             ->update(['semester_name' => $semesterName]);
+
+        // Store previous semester code for undo capability
+        $oldCode = Setting::where('key', 'current_semester_code')->value('value');
+        if ($oldCode) {
+            Setting::updateOrCreate(
+                ['key' => 'previous_semester_code'],
+                ['value' => $oldCode]
+            );
+        }
 
         // Generate a new random semester code
         $semesterCode = 'SEM-' . strtoupper(Str::random(6));
@@ -776,6 +789,74 @@ public function updateEvent(Request $request, $id)
         }
 
         return redirect('/admin/dashboard')->with('success', 'All student merits have been successfully reset and saved. New semester join code is: ' . $semesterCode);
+    }
+
+    public function processUndoReset(Request $request)
+    {
+        $lastArchivedSemester = DB::table('semester_merits')
+            ->orderByDesc('created_at')
+            ->value('semester_name');
+
+        if (!$lastArchivedSemester) {
+            return back()->with('error', 'No archived semester found to undo.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // 1. Restore students' total_merit and active status
+            $archivedMerits = DB::table('semester_merits')
+                ->where('semester_name', $lastArchivedSemester)
+                ->get();
+
+            foreach ($archivedMerits as $record) {
+                DB::table('students')
+                    ->where('s_id', $record->s_id)
+                    ->update([
+                        'total_merit' => $record->total_merit,
+                        'current_semester_active' => true
+                    ]);
+            }
+
+            // 2. Revert merit_logs semester_name back to 'current'
+            DB::table('merit_logs')
+                ->where('semester_name', $lastArchivedSemester)
+                ->update(['semester_name' => 'current']);
+
+            // 3. Revert attendances semester_name back to 'current'
+            DB::table('attendances')
+                ->where('semester_name', $lastArchivedSemester)
+                ->update(['semester_name' => 'current']);
+
+            // 4. Delete the archived records from semester_merits and semester_attendances
+            DB::table('semester_merits')
+                ->where('semester_name', $lastArchivedSemester)
+                ->delete();
+
+            DB::table('semester_attendances')
+                ->where('semester_name', $lastArchivedSemester)
+                ->delete();
+
+            // 5. Restore previous semester code if available
+            $previousCode = Setting::where('key', 'previous_semester_code')->value('value');
+            if ($previousCode) {
+                Setting::updateOrCreate(
+                    ['key' => 'current_semester_code'],
+                    ['value' => $previousCode]
+                );
+                // Clean up previous_semester_code
+                Setting::where('key', 'previous_semester_code')->delete();
+            }
+
+            DB::commit();
+
+            return redirect('/admin/reset')->with('success', 'Reset for semester "' . $lastArchivedSemester . '" has been successfully undone. All student merits and semester codes have been restored.');
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Undo reset failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to undo semester reset: ' . $e->getMessage());
+        }
     }
 
 
