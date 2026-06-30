@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Student Dashboard</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/emms-logo.png') }}">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">

@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Event Attendance</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/emms-logo.png') }}">
 </head>
 <body>
 
