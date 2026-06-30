@@ -115,39 +115,43 @@
                             </div>
                         </div>
 
-                        <!-- Progress List Column -->
+                        <!-- Detailed Table Column -->
                         <div class="col-md-6">
-                            <h6 class="fw-bold mb-3 text-secondary">Pecahan Mengikut Kategori</h6>
-                            <div style="max-height: 260px; overflow-y: auto; padding-right: 5px;">
-                                @php
-                                    $maxParticipants = $categoryStats->first()->total_participants ?? 1;
-                                    $colors = ['#4f46e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-                                @endphp
-                                @foreach($categoryStats as $index => $stat)
-                                    @php
-                                        $percent = ($stat->total_participants / $maxParticipants) * 100;
-                                        $color = $colors[$index % count($colors)];
-                                    @endphp
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <span class="fw-semibold text-dark small">
-                                                @if($index == 0)
-                                                    🏆 
-                                                @endif
-                                                {{ $stat->category }}
-                                            </span>
-                                            <span class="badge rounded-pill bg-light text-dark border fw-bold">
-                                                {{ $stat->total_participants }} students
-                                            </span>
-                                        </div>
-                                        <div class="progress" style="height: 8px; border-radius: 4px;">
-                                            <div class="progress-bar" role="progressbar" 
-                                                 style="width: {{ $percent }}%; background-color: {{ $color }}; border-radius: 4px;" 
-                                                 aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100">
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
+                            <h6 class="fw-bold mb-3 text-secondary">Detailed Analysis By Category</h6>
+                            <div class="table-responsive" style="max-height: 280px; overflow-y: auto; padding-right: 5px;">
+                                <table class="table table-sm align-middle table-hover border-0">
+                                    <thead>
+                                        <tr class="text-muted small border-bottom" style="font-size: 11px;">
+                                            <th class="border-0 pb-2">Category</th>
+                                            <th class="border-0 pb-2 text-center">Events</th>
+                                            <th class="border-0 pb-2 text-center">Total Joined</th>
+                                            <th class="border-0 pb-2 text-center">Avg / Event</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($categoryStats as $index => $stat)
+                                            <tr style="border-bottom: 1px solid #f1f3f5;">
+                                                <td class="py-2 border-0 fw-semibold text-dark small">
+                                                    @if($index == 0 && $stat->total_participants > 0)
+                                                        🏆 
+                                                    @endif
+                                                    {{ $stat->category }}
+                                                </td>
+                                                <td class="py-2 border-0 text-center text-muted small">
+                                                    {{ $stat->total_events }}
+                                                </td>
+                                                <td class="py-2 border-0 text-center">
+                                                    <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-2 fw-semibold" style="font-size: 11px;">
+                                                        {{ $stat->total_participants }}
+                                                    </span>
+                                                </td>
+                                                <td class="py-2 border-0 text-center fw-bold text-success small">
+                                                    {{ $stat->average_participants }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>

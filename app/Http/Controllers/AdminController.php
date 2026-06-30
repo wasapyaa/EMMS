@@ -31,15 +31,22 @@ class AdminController extends Controller
 
     $currentSemesterCode = Setting::where('key', 'current_semester_code')->value('value') ?? 'No Active Code';
 
-    // Get event category participation statistics
-    $categoryStats = DB::table('attendances')
-        ->join('events', 'attendances.e_id', '=', 'events.e_id')
-        ->select('events.category', DB::raw('count(attendances.att_id) as total_participants'))
+    // Get event category participation statistics (events count, total participants, average)
+    $categoryStats = DB::table('events')
+        ->leftJoin('attendances', 'events.e_id', '=', 'attendances.e_id')
+        ->select(
+            'events.category',
+            DB::raw('count(distinct events.e_id) as total_events'),
+            DB::raw('count(attendances.att_id) as total_participants'),
+            DB::raw('CASE WHEN count(distinct events.e_id) > 0 THEN count(attendances.att_id) / count(distinct events.e_id) ELSE 0 END as average_participants')
+        )
+        ->where('events.status', 'approved')
         ->groupBy('events.category')
         ->orderByDesc('total_participants')
         ->get()
         ->map(function($item) {
             $item->category = trim($item->category) ?: 'Others';
+            $item->average_participants = round($item->average_participants, 1);
             return $item;
         });
 
