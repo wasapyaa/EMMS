@@ -70,7 +70,7 @@
                 <h6>Current Hostel Quota</h6>
                 <h2 class="fw-bold">{{ $eligibleStudents }}</h2>
                 <p class="mb-0 mt-2 small">
-                    Anda boleh mengemaskini nilai ini di halaman <a href="/admin/hostel">Hostel Eligibility</a>.
+                    You can update this value on the <a href="/admin/hostel">Hostel Eligibility</a> page.
                 </p>
             </div>
         </div>
@@ -79,7 +79,7 @@
                 <h6>Active Semester Join Code</h6>
                 <h2 class="fw-bold text-white">{{ $currentSemesterCode }}</h2>
                 <p class="mb-0 mt-2 small text-white-50">
-                    Kongsi kod ini kepada pelajar aktif supaya mereka dapat menyertai semester semasa.
+                    Share this code with active students so they can join the current semester.
                 </p>
             </div>
         </div>
@@ -98,13 +98,13 @@
             </div>
             <div class="modal-body pt-3">
                 <p class="text-muted small mb-4">
-                    Statistik di bawah menunjukkan bilangan pelajar (*participation*) yang telah menyertai program/aktiviti mengikut kategori masing-masing.
+                    The statistics below show the number of student participations for each event category.
                 </p>
 
                 @if($categoryStats->isEmpty())
                     <div class="text-center py-5 text-muted">
                         <i class="bi bi-info-circle fs-3 mb-2 d-block"></i>
-                        <p class="mb-0">Tiada data penyertaan pelajar setakat ini.</p>
+                        <p class="mb-0">No student participation data available yet.</p>
                     </div>
                 @else
                     <div class="row align-items-center">
@@ -158,7 +158,7 @@
                 @endif
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
