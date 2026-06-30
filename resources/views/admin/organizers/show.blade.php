@@ -65,5 +65,23 @@
             </p>
         </div>
     </div>
+
+    @if($organizer->status == 'pending')
+    <div class="border-top pt-4 mt-4 d-flex justify-content-end gap-3">
+        <form method="POST" action="/admin/organizers/{{ $organizer->o_id }}/reject" class="d-inline">
+            @csrf
+            <button class="btn btn-outline-danger px-4 py-2 fw-semibold">
+                <i class="bi bi-x-lg me-1"></i> Reject Request
+            </button>
+        </form>
+
+        <form method="POST" action="/admin/organizers/{{ $organizer->o_id }}/approve" class="d-inline">
+            @csrf
+            <button class="btn btn-success px-4 py-2 fw-semibold">
+                <i class="bi bi-check-lg me-1"></i> Approve Request
+            </button>
+        </form>
+    </div>
+    @endif
 </div>
 @endsection
