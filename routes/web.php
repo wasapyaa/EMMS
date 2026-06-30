@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Mail;
 
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/login');
 });
 
 /* LOGIN */
