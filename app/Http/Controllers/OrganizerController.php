@@ -345,13 +345,63 @@ public function showEvent($id)
             abort(404, 'QR code not available for this event.');
         }
 
-        $qrImage = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+        // Generate QR code as PNG image bytes
+        $qrPngBytes = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
             ->size(300)
+            ->margin(1)
             ->generate($event->qr_code_token);
 
-        return response($qrImage, 200)
-            ->header('Content-Type', 'image/svg+xml')
-            ->header('Content-Disposition', 'attachment; filename="event_' . $event->e_id . '_qr.svg"');
+        // Load QR image into GD
+        $qrImg = imagecreatefromstring($qrPngBytes);
+        if (!$qrImg) {
+            abort(500, 'Failed to process QR code image.');
+        }
+
+        $qrWidth = imagesx($qrImg);
+        $qrHeight = imagesy($qrImg);
+
+        // Text wrapping and dimensions calculation
+        $text = $event->title;
+        $lines = explode("\n", wordwrap($text, 28, "\n"));
+        $lineHeight = 18;
+        $textPadding = 20 + (count($lines) * $lineHeight);
+
+        $newWidth = $qrWidth;
+        $newHeight = $qrHeight + $textPadding;
+
+        // Create canvas
+        $canvas = imagecreatetruecolor($newWidth, $newHeight);
+        $white = imagecolorallocate($canvas, 255, 255, 255);
+        $black = imagecolorallocate($canvas, 0, 0, 0);
+
+        imagefill($canvas, 0, 0, $white);
+        imagecopy($canvas, $qrImg, 0, 0, 0, 0, $qrWidth, $qrHeight);
+
+        // Draw centered wrapped text
+        $fontSize = 4; // Built-in GD font size
+        $fontWidth = imagefontwidth($fontSize);
+        foreach ($lines as $index => $line) {
+            $line = trim($line);
+            $textWidth = strlen($line) * $fontWidth;
+            $x = ($newWidth - $textWidth) / 2;
+            $y = $qrHeight + 5 + ($index * $lineHeight);
+            imagestring($canvas, $fontSize, $x, $y, $line, $black);
+        }
+
+        // Capture image bytes
+        ob_start();
+        imagejpeg($canvas, null, 90);
+        $jpgBytes = ob_get_clean();
+
+        // Clean up resources
+        imagedestroy($qrImg);
+        imagedestroy($canvas);
+
+        $safeName = \Illuminate\Support\Str::slug($event->title) . '_qr.jpg';
+
+        return response($jpgBytes, 200)
+            ->header('Content-Type', 'image/jpeg')
+            ->header('Content-Disposition', 'attachment; filename="' . $safeName . '"');
     }
 
 

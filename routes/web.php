@@ -73,6 +73,7 @@ Route::post('/organizer/profile/password', [OrganizerController::class, 'updateP
 Route::get('/organizer/proposals/{id}/edit', [OrganizerController::class, 'editProposal']);
 Route::post('/organizer/proposals/{id}/update', [OrganizerController::class, 'updateProposal']);
 Route::delete('/organizer/proposals/{id}', [OrganizerController::class, 'deleteProposal']);
+Route::get('/organizer/events/{id}/download-qr', [OrganizerController::class, 'downloadQr']);
 
 
 
@@ -108,6 +109,7 @@ Route::post('/admin/events/{id}/reject', [AdminController::class, 'rejectEvent']
 Route::get('/admin/events/{id}/edit', [AdminController::class, 'editEvent']);
 Route::post('/admin/events/{id}/edit', [AdminController::class, 'updateEvent']);
 Route::get('/admin/events/{id}', [AdminController::class, 'viewEvent']);
+Route::get('/admin/events/{id}/download-qr', [AdminController::class, 'downloadQr']);
 
 Route::get('/attendance/{token}', [AttendanceController::class, 'show']);
 Route::post('/attendance/{token}', [AttendanceController::class, 'confirm']);

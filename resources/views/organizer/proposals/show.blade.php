@@ -187,8 +187,10 @@
                 @if($proposal->status == 'approved' && $proposal->qr_path)
                 <div class="mb-4">
                     <p class="info-label"><i class="bi bi-qr-code me-1"></i> QR Code</p>
-                    <a href="{{ asset('storage/'.$proposal->qr_path) }}"
-                       download="event_{{ $proposal->e_id }}_qr.svg"
+                    <div class="mb-2">
+                        <img src="{{ url('/organizer/events/'.$proposal->e_id.'/download-qr') }}" alt="QR Code" class="img-fluid border rounded p-2 bg-white" style="max-width: 150px;">
+                    </div>
+                    <a href="{{ url('/organizer/events/'.$proposal->e_id.'/download-qr') }}"
                        class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-download me-1"></i> Download QR Code
                     </a>
