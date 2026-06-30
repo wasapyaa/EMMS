@@ -5,7 +5,7 @@
     <h5 class="fw-bold mb-0">
         <i class="bi bi-person-lines-fill text-primary me-2"></i> Student Merit Detail
     </h5>
-    <a href="/admin/merit" class="btn btn-light border shadow-sm">
+    <a href="/admin/merit?semester={{ $selectedSemester }}" class="btn btn-light border shadow-sm">
         <i class="bi bi-arrow-left me-1"></i> Back to List
     </a>
 </div>
@@ -31,7 +31,12 @@
 </div>
 
 <div class="content-box">
-    <h6 class="fw-bold mb-4 border-bottom pb-2">Merit History Log</h6>
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+        <h6 class="fw-bold mb-0">Merit History Log</h6>
+        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2.5 py-1.5 fw-semibold" style="font-size: 0.78rem;">
+            {{ $selectedSemester === 'current' ? 'Current Semester' : $selectedSemester }}
+        </span>
+    </div>
     
     <div class="table-responsive">
         <table class="table table-hover align-middle">

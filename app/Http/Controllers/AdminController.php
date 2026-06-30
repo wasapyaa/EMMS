@@ -322,14 +322,15 @@ class AdminController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-public function viewStudentMerit($id)
+public function viewStudentMerit(Request $request, $id)
 {
     $student = Student::findOrFail($id);
+    $selectedSemester = $request->input('semester', 'current');
 
     $logs = DB::table('merit_logs')
     ->join('events', 'events.e_id', '=', 'merit_logs.e_id')
     ->where('merit_logs.s_id', $id)
-    ->where('merit_logs.semester_name', 'current')
+    ->where('merit_logs.semester_name', $selectedSemester)
     ->select(
         'events.title as event_title',
         'merit_logs.points_added',
@@ -338,12 +339,13 @@ public function viewStudentMerit($id)
     ->orderBy('merit_logs.created_at', 'asc')
     ->get();
 
-$totalMerit = $logs->sum('points_added');
+    $totalMerit = $logs->sum('points_added');
 
     return view('admin.merit.show', compact(
         'student',
         'logs',
-        'totalMerit'
+        'totalMerit',
+        'selectedSemester'
     ));
 }
 
@@ -407,6 +409,7 @@ public function viewOrganizer($id)
 {
     $filter = $request->get('status'); // pending / approved
     $selectedSemester = $request->input('semester', 'current');
+    $selectedCategory = $request->input('category');
 
     $semesters = DB::table('semester_merits')
         ->select('semester_name')
@@ -417,6 +420,9 @@ public function viewOrganizer($id)
     $events = Event::where('semester_name', $selectedSemester)
         ->when($filter, function ($q) use ($filter) {
             $q->where('status', $filter);
+        })
+        ->when($selectedCategory, function ($q) use ($selectedCategory) {
+            $q->where('category', $selectedCategory);
         })
         ->orderByDesc('created_at')
         ->get();
@@ -430,7 +436,8 @@ public function viewOrganizer($id)
         'filter',
         'pendingCount',
         'semesters',
-        'selectedSemester'
+        'selectedSemester',
+        'selectedCategory'
     ));
 }
 

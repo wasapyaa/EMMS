@@ -86,7 +86,7 @@
                     @endif
                 </td>
                 <td>
-                    <a href="/admin/merit/{{ $s->s_id }}"
+                    <a href="/admin/merit/{{ $s->s_id }}?semester={{ $selectedSemester }}"
                        class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem; border-color: #3b82f6; color: #3b82f6;">
                        <i class="bi bi-eye"></i> View Profile
                     </a>
