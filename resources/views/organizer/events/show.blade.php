@@ -353,7 +353,7 @@
                         <td>
                             @if($att->status == 'present' || $att->status == 'success')
                                 <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                    <i class="bi bi-check-circle-fill me-1"></i>Hadir
+                                    <i class="bi bi-check-circle-fill me-1"></i>Success
                                 </span>
                             @else
                                 <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
