@@ -162,7 +162,7 @@ class AttendanceController extends Controller
         $semesters = array_values(array_unique(array_merge(['current'], $semesters)));
 
         if ($semester === 'current') {
-            $query = Event::where('status', 'approved');
+            $query = Event::where('status', 'approved')->where('semester_name', 'current');
 
             if ($request->filled('search')) {
                 $query->where(function ($q) use ($request) {

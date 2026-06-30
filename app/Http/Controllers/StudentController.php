@@ -130,7 +130,7 @@ class StudentController extends Controller
 
     public function events(Request $request)
 {
-    $query = Event::where('status', 'approved');
+    $query = Event::where('status', 'approved')->where('semester_name', 'current');
 
     // 🔍 REAL SEARCH
     if ($request->filled('search')) {

@@ -16,19 +16,25 @@ class OrganizerController extends Controller
     {
         $organizerId = session('organizer_id');
 
-        $totalProposals = Event::where('o_id', $organizerId)->count();
+        $totalProposals = Event::where('o_id', $organizerId)->where('semester_name', 'current')->count();
         $approvedEvents = Event::where('o_id', $organizerId)
                                ->where('status', 'approved')
+                               ->where('semester_name', 'current')
                                ->count();
         $pendingEvents = Event::where('o_id', $organizerId)
                               ->where('status', 'pending')
+                              ->where('semester_name', 'current')
                               ->count();
         $rejectedEvents = Event::where('o_id', $organizerId)
                                ->where('status', 'rejected')
+                               ->where('semester_name', 'current')
                                ->count();
 
         // Participation Analytics
-        $approvedEventIds = Event::where('o_id', $organizerId)->where('status', 'approved')->pluck('e_id');
+        $approvedEventIds = Event::where('o_id', $organizerId)
+            ->where('status', 'approved')
+            ->where('semester_name', 'current')
+            ->pluck('e_id');
         
         $totalAttendees = Attendance::whereIn('e_id', $approvedEventIds)->count();
         $averageAttendance = count($approvedEventIds) > 0 ? round($totalAttendees / count($approvedEventIds), 1) : 0;
@@ -58,11 +64,13 @@ class OrganizerController extends Controller
         foreach ($categoriesList as $cat) {
             $eventsCount = Event::where('o_id', $organizerId)
                 ->where('status', 'approved')
+                ->where('semester_name', 'current')
                 ->where('category', $cat)
                 ->count();
                 
             $eventIds = Event::where('o_id', $organizerId)
                 ->where('status', 'approved')
+                ->where('semester_name', 'current')
                 ->where('category', $cat)
                 ->pluck('e_id');
                 
@@ -104,7 +112,7 @@ class OrganizerController extends Controller
     {
         $organizerId = session('organizer_id');
 
-        $allProposals      = Event::where('o_id', $organizerId)->orderByDesc('created_at')->get();
+        $allProposals      = Event::where('o_id', $organizerId)->where('semester_name', 'current')->orderByDesc('created_at')->get();
         $pendingProposals  = $allProposals->where('status', 'pending');
         $approvedProposals = $allProposals->where('status', 'approved');
         $rejectedProposals = $allProposals->where('status', 'rejected');
@@ -208,6 +216,7 @@ $data += [
 
         $allEvents = Event::where('o_id', $organizerId)
                        ->where('status', 'approved')
+                       ->where('semester_name', 'current')
                        ->withCount('attendances')
                        ->orderByDesc('start_time')
                        ->get();

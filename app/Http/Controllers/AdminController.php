@@ -25,7 +25,7 @@ class AdminController extends Controller
 {
     $totalStudents  = Student::where('current_semester_active', true)->count();
     $totalOrganizers = Organizer::count();
-    $totalEvents    = Event::count();
+    $totalEvents    = Event::where('semester_name', 'current')->count();
     $eligibleStudents = Setting::where('key', 'hostel_eligible_students')->value('value');
     $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
 
@@ -41,6 +41,7 @@ class AdminController extends Controller
             DB::raw('CASE WHEN count(distinct events.e_id) > 0 THEN count(attendances.att_id) / count(distinct events.e_id) ELSE 0 END as average_participants')
         )
         ->where('events.status', 'approved')
+        ->where('events.semester_name', 'current')
         ->groupBy('events.category')
         ->orderByDesc('total_participants')
         ->get()
@@ -408,13 +409,16 @@ public function viewOrganizer($id)
 {
     $filter = $request->get('status'); // pending / approved
 
-    $events = Event::when($filter, function ($q) use ($filter) {
+    $events = Event::where('semester_name', 'current')
+        ->when($filter, function ($q) use ($filter) {
             $q->where('status', $filter);
         })
         ->orderByDesc('created_at')
         ->get();
 
-    $pendingCount = Event::where('status', 'pending')->count();
+    $pendingCount = Event::where('status', 'pending')
+        ->where('semester_name', 'current')
+        ->count();
 
     return view('admin.events.index', compact(
         'events',
@@ -732,6 +736,11 @@ public function updateEvent(Request $request, $id)
             ->where('semester_name', 'current')
             ->update(['semester_name' => $semesterName]);
 
+        // Archive events to the reset semester
+        DB::table('events')
+            ->where('semester_name', 'current')
+            ->update(['semester_name' => $semesterName]);
+
         // Store previous semester code for undo capability
         $oldCode = Setting::where('key', 'current_semester_code')->value('value');
         if ($oldCode) {
@@ -827,6 +836,11 @@ public function updateEvent(Request $request, $id)
 
             // 2. Revert merit_logs semester_name back to 'current'
             DB::table('merit_logs')
+                ->where('semester_name', $lastArchivedSemester)
+                ->update(['semester_name' => 'current']);
+
+            // Revert events semester_name back to 'current'
+            DB::table('events')
                 ->where('semester_name', $lastArchivedSemester)
                 ->update(['semester_name' => 'current']);
 
