@@ -7,12 +7,14 @@
         <div class="card-body p-4">
 
             {{-- LOGO --}}
-            <div class="text-center mb-3">
+            <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
                 <img src="{{ asset('images/UiTM-Logo.png') }}" alt="UiTM" height="50">
+                <div style="width: 1px; height: 35px; background-color: #dee2e6;"></div>
+                <img src="{{ asset('images/emms-logo.png') }}" alt="EMMS" height="42">
             </div>
 
             {{-- TITLE --}}
-            <h4 class="text-center fw-bold">Welcome Back</h4>
+            <h4 class="text-center fw-bold">EMMS</h4>
             <p class="text-center text-muted mb-4">
                 Please enter your credentials to access your portal
             </p>
