@@ -25,8 +25,8 @@
 
 {{-- TABS --}}
 <div class="content-box mb-4 py-3">
-    <div class="d-flex gap-2" id="proposalTabs" role="tablist">
-        <button class="btn btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 btn-primary" 
+    <div class="nav d-flex gap-2" id="proposalTabs" role="tablist">
+        <button class="btn btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 btn-primary active" 
             id="all-tab" data-bs-toggle="tab" data-bs-target="#all"
             type="button" role="tab" aria-controls="all" aria-selected="true">
             <i class="bi bi-grid"></i> All <span class="badge bg-white text-primary ms-1 rounded-pill" style="font-size:0.75rem;">{{ $allProposals->count() }}</span>
