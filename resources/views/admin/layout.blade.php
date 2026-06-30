@@ -73,7 +73,10 @@
 <!-- SIDEBAR -->
 <div class="sidebar p-3">
 
-    <h5 class="mb-4">Admin HEP</h5>
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <img src="{{ asset('images/emms-logo.png') }}" alt="EMMS Logo" height="30" style="filter: brightness(0) invert(1);">
+        <h5 class="fw-bold mb-0 text-white">Admin HEP</h5>
+    </div>
 
     <!-- MENU (akan push logout ke bawah) -->
     <div class="flex-grow-1">
@@ -123,9 +126,9 @@
     <!-- TOP BAR -->
     <div class="topbar d-flex justify-content-between align-items-center mb-4">
         <h5 class="mb-0">Admin Dashboard</h5>
-        <div>
-            <i class="bi bi-person-circle me-2"></i>
-            {{ $admin->name ?? 'Admin' }}
+        <div class="d-flex align-items-center gap-2">
+            <img src="{{ asset('images/emms-logo.png') }}" alt="EMMS Logo" height="24">
+            <span class="fw-semibold text-dark">{{ $admin->name ?? 'Admin' }}</span>
         </div>
     </div>
 
