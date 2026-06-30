@@ -35,12 +35,11 @@
         <table class="table align-middle mb-0">
             <thead style="background:#f8f9fa;">
                 <tr>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 22%;">Idea Title</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 28%;">Description</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 16%;">Student</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 25%;">Idea Title</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 33%;">Description</th>
+                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 18%;">Student</th>
                     <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 8%; text-align: center;">Net Score</th>
                     <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 8%; text-align: center;">Reports</th>
-                    <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 8%;">Status</th>
                     <th style="font-size:0.8rem;text-transform:uppercase;color:#6c757d;padding:12px 16px; width: 10%;">Date</th>
                 </tr>
             </thead>
@@ -90,18 +89,13 @@
                             <span class="text-muted" style="font-size:0.85rem;">-</span>
                         @endif
                     </td>
-                    <td>
-                        <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-2.5 py-1.5 fw-bold" style="font-size: 0.78rem;">
-                            {{ ucfirst($idea->status) }}
-                        </span>
-                    </td>
                     <td class="text-secondary fw-medium" style="font-size: 0.85rem; white-space: nowrap;">
                         {{ $idea->created_at->format('d M Y, h:i A') }}
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">
+                    <td colspan="6" class="text-center py-5 text-muted">
                         <i class="bi bi-inbox fs-2 d-block mb-3 text-muted"></i>
                         No event ideas have been suggested yet.
                     </td>
