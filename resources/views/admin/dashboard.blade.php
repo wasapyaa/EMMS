@@ -1,6 +1,17 @@
 @extends('admin.layout')
 
 @section('content')
+<style>
+    .stat-card.clickable-card {
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .stat-card.clickable-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+</style>
+
 @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show">
         {{ session('success') }}
@@ -37,9 +48,16 @@
     </div>
 
     <div class="col-md-4">
-        <div class="stat-card bg-event">
-            <h6>Total Events</h6>
-            <h2 class="fw-bold">{{ $totalEvents }}</h2>
+        <div class="stat-card bg-event clickable-card" data-bs-toggle="modal" data-bs-target="#eventStatsModal">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6>Total Events</h6>
+                    <h2 class="fw-bold mb-0">{{ $totalEvents }}</h2>
+                </div>
+                <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1 small">
+                    <i class="bi bi-info-circle-fill me-1"></i>Stats
+                </span>
+            </div>
         </div>
     </div>
 </div>
@@ -67,5 +85,131 @@
         </div>
     </div>
 </div>
+
+<!-- Event Statistics Modal -->
+<div class="modal fade" id="eventStatsModal" tabindex="-1" aria-labelledby="eventStatsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="eventStatsModalLabel">
+                    <i class="bi bi-bar-chart-line-fill text-primary me-2"></i> Event Participation Statistics
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <p class="text-muted small mb-4">
+                    Statistik di bawah menunjukkan bilangan pelajar (*participation*) yang telah menyertai program/aktiviti mengikut kategori masing-masing.
+                </p>
+
+                @if($categoryStats->isEmpty())
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-info-circle fs-3 mb-2 d-block"></i>
+                        <p class="mb-0">Tiada data penyertaan pelajar setakat ini.</p>
+                    </div>
+                @else
+                    <div class="row align-items-center">
+                        <!-- Chart Column -->
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <div class="p-3 bg-light rounded-4 d-flex justify-content-center align-items-center" style="min-height: 280px;">
+                                <canvas id="categoryStatsChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Progress List Column -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3 text-secondary">Pecahan Mengikut Kategori</h6>
+                            <div style="max-height: 260px; overflow-y: auto; padding-right: 5px;">
+                                @php
+                                    $maxParticipants = $categoryStats->first()->total_participants ?? 1;
+                                    $colors = ['#4f46e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+                                @endphp
+                                @foreach($categoryStats as $index => $stat)
+                                    @php
+                                        $percent = ($stat->total_participants / $maxParticipants) * 100;
+                                        $color = $colors[$index % count($colors)];
+                                    @endphp
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="fw-semibold text-dark small">
+                                                @if($index == 0)
+                                                    🏆 
+                                                @endif
+                                                {{ $stat->category }}
+                                            </span>
+                                            <span class="badge rounded-pill bg-light text-dark border fw-bold">
+                                                {{ $stat->total_participants }} students
+                                            </span>
+                                        </div>
+                                        <div class="progress" style="height: 8px; border-radius: 4px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ $percent }}%; background-color: {{ $color }}; border-radius: 4px;" 
+                                                 aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if(!$categoryStats->isEmpty())
+<!-- Include Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById('categoryStatsChart').getContext('2d');
+    
+    const labels = {!! json_encode($categoryStats->pluck('category')) !!};
+    const data = {!! json_encode($categoryStats->pluck('total_participants')) !!};
+    const colors = ['#4f46e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        font: {
+                            size: 11,
+                            weight: '500'
+                        },
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ` ${context.label}: ${context.raw} students`;
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+});
+</script>
+@endif
 
 @endsection

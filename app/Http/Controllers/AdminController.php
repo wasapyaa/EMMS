@@ -31,12 +31,25 @@ class AdminController extends Controller
 
     $currentSemesterCode = Setting::where('key', 'current_semester_code')->value('value') ?? 'No Active Code';
 
+    // Get event category participation statistics
+    $categoryStats = DB::table('attendances')
+        ->join('events', 'attendances.e_id', '=', 'events.e_id')
+        ->select('events.category', DB::raw('count(attendances.att_id) as total_participants'))
+        ->groupBy('events.category')
+        ->orderByDesc('total_participants')
+        ->get()
+        ->map(function($item) {
+            $item->category = trim($item->category) ?: 'Others';
+            return $item;
+        });
+
     return view('admin.dashboard', compact(
         'totalStudents',
         'totalOrganizers',
         'totalEvents',
         'eligibleStudents',
-        'currentSemesterCode'
+        'currentSemesterCode',
+        'categoryStats'
     ));
 }
 
