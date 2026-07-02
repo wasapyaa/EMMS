@@ -7,7 +7,7 @@
     </h5>
 
     <p class="text-muted">
-        This will send an email to <strong>all students</strong> about their current
+        This will send an email to <strong>all active students in the current semester</strong> about their current
         merit ranking and a reminder to compete for hostel accommodation next semester.
     </p>
 
@@ -19,7 +19,7 @@
     <form method="POST" action="/admin/send-reminder">
         @csrf
         <button class="btn btn-primary">
-            <i class="bi bi-send me-1"></i> Send Email to All Students
+            <i class="bi bi-send me-1"></i> Send Email to All Active Students
         </button>
     </form>
 

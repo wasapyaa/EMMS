@@ -938,7 +938,9 @@ public function showSendReminder()
 
     public function sendReminderToAll()
 {
-    $students = Student::orderByDesc('total_merit')->get();
+    $students = Student::where('current_semester_active', true)
+        ->orderByDesc('total_merit')
+        ->get();
     
     $eligibleStudents = Setting::where('key', 'hostel_eligible_students')->value('value');
     $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
