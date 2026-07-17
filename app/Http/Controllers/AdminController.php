@@ -938,7 +938,24 @@ public function showSendReminder()
 
     public function sendReminderToAll()
 {
-    $students = Student::where('current_semester_active', true)
+    // Prevent PHP script timeout and run in the background if the user closes the tab
+    set_time_limit(0);
+    ignore_user_abort(true);
+
+    // Calculate merits dynamically from merit_logs to match the ranking board exactly
+    $students = DB::table('students')
+        ->where('students.current_semester_active', true)
+        ->leftJoin('merit_logs', function($join) {
+            $join->on('merit_logs.s_id', '=', 'students.s_id')
+                 ->where('merit_logs.semester_name', '=', 'current');
+        })
+        ->select(
+            'students.s_id',
+            'students.name',
+            'students.email',
+            DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
+        )
+        ->groupBy('students.s_id', 'students.name', 'students.email')
         ->orderByDesc('total_merit')
         ->get();
     
