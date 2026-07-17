@@ -104,9 +104,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Default center: UiTM Shah Alam
-            var defaultLat = 3.0697;
-            var defaultLng = 101.5037;
+            // Default center: UiTM Jasin Melaka
+            var defaultLat = 2.2225;
+            var defaultLng = 102.4533;
             var defaultZoom = 15;
 
             var map = L.map('map').setView([defaultLat, defaultLng], defaultZoom);

@@ -165,8 +165,8 @@
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                var initialLat = parseFloat("{{ $proposal->location_lat }}") || 3.0697;
-                var initialLng = parseFloat("{{ $proposal->location_long }}") || 101.5037;
+                var initialLat = parseFloat("{{ $proposal->location_lat }}") || 2.2225;
+                var initialLng = parseFloat("{{ $proposal->location_long }}") || 102.4533;
                 var initialRadius = parseInt("{{ $proposal->radius_meter }}") || 100;
                 var isApproved = "{{ $proposal->status == 'approved' }}" === "1";
 
