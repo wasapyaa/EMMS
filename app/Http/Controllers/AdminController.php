@@ -938,86 +938,16 @@ public function showSendReminder()
 
     public function sendReminderToAll()
 {
-    // Prevent PHP script timeout and run in the background if the user closes the tab
-    set_time_limit(0);
-    ignore_user_abort(true);
+    $artisanPath = base_path('artisan');
 
-    // Calculate merits dynamically from merit_logs to match the ranking board exactly
-    $students = DB::table('students')
-        ->where('students.current_semester_active', true)
-        ->leftJoin('merit_logs', function($join) {
-            $join->on('merit_logs.s_id', '=', 'students.s_id')
-                 ->where('merit_logs.semester_name', '=', 'current');
-        })
-        ->select(
-            'students.s_id',
-            'students.name',
-            'students.email',
-            DB::raw('COALESCE(SUM(merit_logs.points_added), 0) as total_merit')
-        )
-        ->groupBy('students.s_id', 'students.name', 'students.email')
-        ->orderByDesc('total_merit')
-        ->get();
-    
-    $eligibleStudents = Setting::where('key', 'hostel_eligible_students')->value('value');
-    $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
-
-    // Calculate dynamic brackets based on the eligible limit
-    $bracket1Max = max(1, intval(round($eligibleStudents * 0.23))); // equivalent to top ~30 of 130
-    $bracket2Max = max($bracket1Max + 1, intval(round($eligibleStudents * 0.77))); // equivalent to top ~100 of 130
-    $bracket3Max = $eligibleStudents; // up to the limit
-
-    foreach ($students as $index => $student) {
-
-        $rank = $index + 1;
-        $messageBody = "";
-
-        if ($rank >= 1 && $rank <= $bracket1Max) {
-
-            $messageBody = "Congratulations {$student->name}!
-
-You are currently ranked #{$rank} based on your merit points.
-
-Excellent performance! Keep up the great work and maintain your position to secure hostel accommodation for the upcoming semester.";
-
-        } elseif ($rank > $bracket1Max && $rank <= $bracket2Max) {
-
-            $messageBody = "Dear {$student->name},
-
-Your current merit ranking is #{$rank}.
-
-You are in a competitive position. Continue participating in events to improve your merit points and strengthen your chances of obtaining hostel accommodation.";
-
-        } elseif ($rank > $bracket2Max && $rank <= $bracket3Max) {
-
-            $messageBody = "Dear {$student->name},
-
-Your current merit ranking is #{$rank}.
-
-Please be cautious. Only the top {$eligibleStudents} students are eligible for hostel accommodation.
-You are advised to actively participate in more events to maintain or improve your ranking.";
-
-        } else {
-
-            $messageBody = "Dear {$student->name},
-
-Your current merit ranking is #{$rank}.
-
-Unfortunately, your ranking is currently outside the hostel eligibility range (top {$eligibleStudents} students).
-You are encouraged to participate in more events to earn additional merit points and improve your chances of securing hostel accommodation next semester.";
-        }
-
-        // SEND EMAIL
-        Mail::raw(
-            $messageBody . "\n\nRegards,\nStudent Affairs Department",
-            function ($message) use ($student) {
-                $message->to($student->email)
-                        ->subject('Merit Ranking & Hostel Accommodation Reminder');
-            }
-        );
+    // Detect OS and run the console command in the background
+    if (substr(php_uname(), 0, 7) == "Windows") {
+        pclose(popen("start /B php \"{$artisanPath}\" emms:send-reminders", "r"));
+    } else {
+        exec("php \"{$artisanPath}\" emms:send-reminders > /dev/null 2>&1 &");
     }
 
-    return back()->with('success', 'Merit reminder emails sent successfully.');
+    return back()->with('success', '✅ Merit reminder emails are now being sent in the background. It will take a few minutes to complete.');
 }
 
     public function ideas(Request $request)
