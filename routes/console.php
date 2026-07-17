@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 Artisan::command('emms:send-reminders', function () {
+    $this->info('Starting emms:send-reminders command...');
     // Prevent script timeout in CLI
     set_time_limit(0);
 
@@ -42,6 +43,14 @@ Artisan::command('emms:send-reminders', function () {
         ->orderByDesc('total_merit')
         ->get();
     
+    $studentCount = $students->count();
+    $this->info("Found {$studentCount} active students.");
+
+    if ($studentCount === 0) {
+        $this->warn('No active students found. Exiting.');
+        return;
+    }
+
     $eligibleStudents = Setting::where('key', 'hostel_eligible_students')->value('value');
     $eligibleStudents = $eligibleStudents !== null ? intval($eligibleStudents) : 130;
 
@@ -52,6 +61,8 @@ Artisan::command('emms:send-reminders', function () {
 
     foreach ($students as $index => $student) {
         $rank = $index + 1;
+        $this->info("({$rank}/{$studentCount}) Sending email to {$student->name} ({$student->email}) with merit {$student->total_merit}...");
+
         $messageBody = "";
 
         if ($rank >= 1 && $rank <= $bracket1Max) {
@@ -73,11 +84,15 @@ Artisan::command('emms:send-reminders', function () {
                             ->subject('Merit Ranking & Hostel Accommodation Reminder');
                 }
             );
+            $this->info("Successfully sent email to {$student->name}.");
         } catch (\Exception $e) {
+            $this->error("Failed to send email to {$student->name}: " . $e->getMessage());
             \Log::error("Failed to send merit reminder to student {$student->name} ({$student->email}): " . $e->getMessage());
         }
 
         // Delay 0.1s to prevent rate limits
         usleep(100000);
     }
+
+    $this->info('Completed sending all merit reminders.');
 })->purpose('Send merit reminders to all active students in the background');
